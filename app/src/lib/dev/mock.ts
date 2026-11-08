@@ -38,6 +38,8 @@ export async function installMock() {
       // The agent panel lists a fake agent; sessions start but never answer in the browser.
       case "list_agents": return [{ kind: "claude", name: "Claude Code", path: "claude", version: "dev mock" }];
       case "agent_start": return 1;
+      case "agent_changes":
+      case "agent_undo": return [];
       case "load_chat": return chats[args.key] ?? [];
       case "save_chat": chats[args.key] = args.messages; return null;
       case "plugin:event|listen": return 0;

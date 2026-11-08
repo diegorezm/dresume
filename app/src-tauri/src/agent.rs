@@ -4,10 +4,10 @@
 use std::collections::HashMap;
 use std::fs;
 use std::hash::{Hash, Hasher};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
-use dresume_agent::{AgentEvent, AgentInfo, AgentKind, PermissionMode, Session, SessionOptions};
+use dresume_agent::{AgentEvent, AgentInfo, AgentKind, FileChange, PermissionMode, Session, SessionOptions, Snapshot};
 use serde_json::Value;
 use tauri::ipc::Channel;
 use tauri::{AppHandle, State};
@@ -16,14 +16,21 @@ use crate::{AppState, CmdResult, config_dir, err, with_ws};
 
 #[derive(Default)]
 pub struct AgentState {
-    sessions: Mutex<HashMap<u32, Session>>,
+    sessions: Mutex<HashMap<u32, Entry>>,
     next: Mutex<u32>,
 }
 
+struct Entry {
+    session: Session,
+    root: PathBuf,
+    /// Workspace as it was before the agent's pending (not yet kept or undone) changes.
+    snapshot: Option<Snapshot>,
+}
+
 impl AgentState {
-    fn with<T>(&self, id: u32, f: impl FnOnce(&Session) -> T) -> CmdResult<T> {
-        let sessions = self.sessions.lock().unwrap();
-        sessions.get(&id).map(f).ok_or_else(|| "agent session not found".into())
+    fn with<T>(&self, id: u32, f: impl FnOnce(&mut Entry) -> T) -> CmdResult<T> {
+        let mut sessions = self.sessions.lock().unwrap();
+        sessions.get_mut(&id).map(f).ok_or_else(|| "agent session not found".into())
     }
 }
 
@@ -49,7 +56,7 @@ pub async fn agent_start(
         };
         Ok((ws.root().to_path_buf(), instructions(ws.root(), resume.as_deref(), template.as_deref())))
     })?;
-    let opts = SessionOptions { cwd, instructions, mode, model: None };
+    let opts = SessionOptions { cwd: cwd.clone(), instructions, mode, model: None };
     let session = dresume_agent::start(kind, opts, Arc::new(move |e| {
         let _ = on_event.send(e);
     }));
@@ -58,23 +65,51 @@ pub async fn agent_start(
         *next += 1;
         *next
     };
-    agents.sessions.lock().unwrap().insert(id, session);
+    agents.sessions.lock().unwrap().insert(id, Entry { session, root: cwd, snapshot: None });
     Ok(id)
 }
 
+/// Sends a message. The first one after the last keep/undo snapshots the workspace, so the
+/// changes of several turns add up until the user decides.
 #[tauri::command]
 pub fn agent_send(agents: State<AgentState>, id: u32, text: String) -> CmdResult<()> {
-    agents.with(id, |s| s.send(text))
+    agents.with(id, |e| {
+        if e.snapshot.is_none() {
+            e.snapshot = Some(Snapshot::take(&e.root));
+        }
+        e.session.send(text)
+    })
 }
 
 #[tauri::command]
 pub fn agent_respond(agents: State<AgentState>, id: u32, request: String, allow: bool) -> CmdResult<()> {
-    agents.with(id, |s| s.respond(request, allow))
+    agents.with(id, |e| e.session.respond(request, allow))
 }
 
 #[tauri::command]
 pub fn agent_cancel(agents: State<AgentState>, id: u32) -> CmdResult<()> {
-    agents.with(id, |s| s.cancel())
+    agents.with(id, |e| e.session.cancel())
+}
+
+/// Files the agent changed since the snapshot.
+#[tauri::command]
+pub fn agent_changes(agents: State<AgentState>, id: u32) -> CmdResult<Vec<FileChange>> {
+    agents.with(id, |e| e.snapshot.as_ref().map(|s| s.changes(&e.root)).unwrap_or_default())
+}
+
+/// Accepts the pending changes.
+#[tauri::command]
+pub fn agent_keep(agents: State<AgentState>, id: u32) -> CmdResult<()> {
+    agents.with(id, |e| e.snapshot = None)
+}
+
+/// Reverts the pending changes; returns the restored paths.
+#[tauri::command]
+pub fn agent_undo(agents: State<AgentState>, id: u32) -> CmdResult<Vec<String>> {
+    agents.with(id, |e| match e.snapshot.take() {
+        Some(snapshot) => snapshot.restore(&e.root).map_err(err),
+        None => Ok(vec![]),
+    })?
 }
 
 #[tauri::command]

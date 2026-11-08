@@ -2,7 +2,7 @@
   import { onDestroy, tick, untrack } from "svelte";
   import { t } from "./i18n.svelte";
   import { appearance } from "./theme.svelte";
-  import { api, type AgentEvent, type AgentInfo, type AgentKind, type ToolStatus } from "./api";
+  import { api, type AgentEvent, type AgentInfo, type AgentKind, type FileChange, type ToolStatus } from "./api";
 
   interface Props {
     /** Resume the user has open; the agent is told about it and the chat is kept per resume. */
@@ -16,7 +16,10 @@
   type Msg =
     | { kind: "user" | "assistant" | "error"; text: string }
     | { kind: "tool"; id: string; title: string; status: ToolStatus }
-    | { kind: "permission"; id: string; title: string; detail: string | null; answer: boolean | null };
+    | { kind: "permission"; id: string; title: string; detail: string | null; answer: boolean | null }
+    | { kind: "changes"; session: number; files: Changed[]; state: "pending" | "kept" | "undone" | "expired" };
+
+  type Changed = { path: string; diff: string; status: "new" | "deleted" | "edited" };
 
   let agents = $state<AgentInfo[] | null>(null);
   let messages = $state<Msg[]>([]);
@@ -34,6 +37,15 @@
 
   /** Incremented on every new session so late events from a stopped one are ignored. */
   let generation = 0;
+  /** Sessions whose process exited; kept alive in the backend for undo until the chat moves on. */
+  let dead: number[] = [];
+
+  // A new agent or permission mode applies from the next session.
+  $effect(() => {
+    void kind;
+    void appearance.settings.agentMode;
+    untrack(stop);
+  });
 
   $effect(() => {
     const key = resume;
@@ -42,6 +54,8 @@
       messages = [];
     });
     api.loadChat<Msg>(key).then((saved) => {
+      // Undo needs the session that made the changes, which is gone after a reload.
+      for (const m of saved) if (m.kind === "changes" && m.state === "pending") m.state = "expired";
       if (key === resume) messages = saved;
       scrollDown();
     }).catch(() => {});
@@ -51,6 +65,7 @@
 
   function stop() {
     generation++;
+    for (const id of dead.splice(0)) api.agentStop(id);
     if (session !== null) api.agentStop(session);
     session = null;
     status = "idle";
@@ -90,7 +105,8 @@
       case "turn_end":
         if (e.error) messages.push({ kind: "error", text: e.error });
         status = "idle";
-        persist();
+        if (session !== null) showChanges(session);
+        else persist();
         onturnend?.();
         break;
       case "error":
@@ -98,12 +114,53 @@
         break;
       case "exited":
         if (status !== "idle") messages.push({ kind: "error", text: t("agent.exited") });
+        if (session !== null) dead.push(session);
         session = null;
         status = "idle";
         persist();
         break;
     }
     scrollDown();
+  }
+
+  /** Lists what the agent changed since the last keep/undo; changes add up across turns. */
+  async function showChanges(id: number) {
+    const files = await api.agentChanges(id).catch(() => [] as FileChange[]);
+    if (files.length) {
+      messages = messages.filter((m) => m.kind !== "changes" || m.state !== "pending");
+      messages.push({
+        kind: "changes",
+        session: id,
+        state: "pending",
+        files: files.map((f) => ({
+          path: f.path,
+          diff: f.diff,
+          status: f.before === null ? "new" : f.after === null ? "deleted" : "edited",
+        })),
+      });
+      scrollDown();
+    }
+    persist();
+  }
+
+  async function decide(msg: Msg, keep: boolean) {
+    if (msg.kind !== "changes" || msg.state !== "pending") return;
+    try {
+      if (keep) await api.agentKeep(msg.session);
+      else await api.agentUndo(msg.session);
+      msg.state = keep ? "kept" : "undone";
+    } catch (e) {
+      messages.push({ kind: "error", text: String(e) });
+    }
+    persist();
+  }
+
+  /** Diff lines with their kind, for coloring. */
+  function lines(diff: string) {
+    return diff
+      .split("\n")
+      .filter((l) => !l.startsWith("---") && !l.startsWith("+++"))
+      .map((l) => ({ text: l, kind: l.startsWith("+") ? "add" : l.startsWith("-") ? "del" : l.startsWith("@@") ? "hunk" : "" }));
   }
 
   async function send() {
@@ -116,7 +173,8 @@
       if (session === null) {
         status = "starting";
         const mine = ++generation;
-        const id = await api.agentStart(kind, "autoEdit", resume, (e) => mine === generation && onEvent(e));
+        const mode = appearance.settings.agentMode;
+        const id = await api.agentStart(kind, mode, resume, (e) => mine === generation && onEvent(e));
         if (mine !== generation) return void api.agentStop(id);
         session = id;
       }
@@ -197,6 +255,24 @@
               </div>
             {:else}
               <span class="muted">{msg.answer ? t("agent.allowed") : t("agent.denied")}</span>
+            {/if}
+          </div>
+        {:else if msg.kind === "changes"}
+          <div class="changes">
+            <strong>{t("agent.changes", { n: msg.files.length })}</strong>
+            {#each msg.files as f (f.path)}
+              <details>
+                <summary><code>{f.path}</code>{#if f.status !== "edited"} <span class="tag">{f.status === "new" ? t("agent.created") : t("agent.deleted")}</span>{/if}</summary>
+                <pre class="diff">{#each lines(f.diff) as l, j (j)}<span class={l.kind}>{l.text}</span>{"\n"}{/each}</pre>
+              </details>
+            {/each}
+            {#if msg.state === "pending"}
+              <div class="row">
+                <button class="small" onclick={() => decide(msg, false)}>{t("agent.undo")}</button>
+                <button class="small primary" onclick={() => decide(msg, true)}>{t("agent.keep")}</button>
+              </div>
+            {:else if msg.state !== "expired"}
+              <span class="muted">{msg.state === "kept" ? t("agent.kept") : t("agent.undone")}</span>
             {/if}
           </div>
         {/if}
@@ -347,6 +423,47 @@
     font-family: var(--mono);
     font-size: 0.75rem;
     white-space: pre-wrap;
+  }
+  .changes {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.6rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+  }
+  .changes summary {
+    cursor: pointer;
+  }
+  .changes code {
+    font-family: var(--mono);
+  }
+  .tag {
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  .diff {
+    margin: 0.3rem 0 0;
+    max-height: 16rem;
+    overflow: auto;
+    padding: 0.4rem;
+    background: var(--surface-2);
+    border-radius: var(--radius-sm);
+    font-family: var(--mono);
+    font-size: 0.75rem;
+  }
+  .diff .add {
+    color: color-mix(in srgb, var(--accent) 80%, var(--text));
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+  }
+  .diff .del {
+    color: var(--danger);
+    background: var(--danger-bg);
+  }
+  .diff .hunk {
+    color: var(--muted);
   }
   .row {
     display: flex;

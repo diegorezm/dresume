@@ -317,6 +317,9 @@ pub fn run() {
             agent::agent_respond,
             agent::agent_cancel,
             agent::agent_stop,
+            agent::agent_changes,
+            agent::agent_keep,
+            agent::agent_undo,
             agent::load_chat,
             agent::save_chat,
         ])

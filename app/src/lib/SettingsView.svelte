@@ -1,5 +1,6 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
+  import { api, type AgentInfo, type PermissionMode } from "./api";
   import { appearance, type FontChoice, type Radius, type Theme } from "./theme.svelte";
   import { LOCALES, i18n, t, type Key, type Locale } from "./i18n.svelte";
 
@@ -18,6 +19,15 @@
   ];
 
   const s = $derived(appearance.settings);
+
+  let agents = $state<AgentInfo[]>([]);
+  api.listAgents().then((list) => (agents = list.filter((a) => a.path))).catch(() => {});
+  const modes: { id: PermissionMode; label: Key; desc: Key }[] = [
+    { id: "ask", label: "agent.modeAsk", desc: "agent.modeAskDesc" },
+    { id: "autoEdit", label: "agent.modeAutoEdit", desc: "agent.modeAutoEditDesc" },
+    { id: "readOnly", label: "agent.modeReadOnly", desc: "agent.modeReadOnlyDesc" },
+  ];
+  const currentAgent = $derived(agents.find((a) => a.kind === s.agent)?.kind ?? agents[0]?.kind);
   const accent = $derived(s.accent ?? appearance.theme.colors.accent);
 
   function swatches(th: Theme) {
@@ -82,6 +92,26 @@
         <button class="primary" type="submit" disabled={!customName.trim()}>{t("settings.saveTheme")}</button>
       </form>
     {/if}
+  </section>
+
+  <section class="card">
+    <h3>{t("settings.agent")}</h3>
+    {#if agents.length}
+      <div class="segmented">
+        {#each agents as a (a.kind)}
+          <button class:active={currentAgent === a.kind} title={a.version ?? ""} onclick={() => appearance.update({ agent: a.kind })}>{a.name}</button>
+        {/each}
+      </div>
+    {:else}
+      <p class="hint">{t("settings.agentNone")}</p>
+    {/if}
+    <h3 class="sub-h">{t("agent.mode")}</h3>
+    <div class="segmented">
+      {#each modes as m (m.id)}
+        <button class:active={s.agentMode === m.id} onclick={() => appearance.update({ agentMode: m.id })}>{t(m.label)}</button>
+      {/each}
+    </div>
+    <p class="hint">{t(modes.find((m) => m.id === s.agentMode)?.desc ?? "agent.modeAutoEditDesc")} {t("settings.agentHint")}</p>
   </section>
 
   <section class="card grid2">
@@ -199,6 +229,9 @@
     /* Wide enough for the longest translated option row; wraps to fewer columns otherwise. */
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
     gap: 1.25rem;
+  }
+  .sub-h {
+    margin-top: 1rem;
   }
   .segmented {
     display: inline-flex;

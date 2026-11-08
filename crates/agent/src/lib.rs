@@ -17,6 +17,9 @@ mod claude;
 mod codex;
 mod process;
 mod rpc;
+mod snapshot;
+
+pub use snapshot::{FileChange, Snapshot};
 
 use std::path::PathBuf;
 use std::sync::Arc;

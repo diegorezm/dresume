@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { i18n, systemLocale, type Locale } from "./i18n.svelte";
-import type { AgentKind } from "./api";
+import type { AgentKind, PermissionMode } from "./api";
 
 /**
  * A theme is a set of colors. Users add their own as JSON files in the
@@ -47,6 +47,8 @@ export interface Settings {
   locale: Locale | null;
   /** AI agent used by the agent panel; `null` picks the first one installed. */
   agent: AgentKind | null;
+  /** What the agent may do without asking. */
+  agentMode: PermissionMode;
 }
 
 export const BUILTIN_THEMES: Theme[] = [
@@ -175,6 +177,7 @@ export const DEFAULT_SETTINGS: Settings = {
   lastWorkspace: null,
   locale: null,
   agent: null,
+  agentMode: "autoEdit",
 };
 
 const FONTS: Record<FontChoice, string> = {

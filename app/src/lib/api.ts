@@ -61,6 +61,14 @@ export interface AgentInfo {
 
 export type ToolStatus = "running" | "done" | "failed";
 
+/** A file the agent created, edited or deleted since the last keep/undo. */
+export interface FileChange {
+  path: string;
+  before: string | null;
+  after: string | null;
+  diff: string;
+}
+
 /** Normalized events from any agent (see crates/agent). */
 export type AgentEvent =
   | { type: "ready" }
@@ -111,6 +119,9 @@ export const api = {
     invoke<void>("agent_respond", { id, request, allow }),
   agentCancel: (id: number) => invoke<void>("agent_cancel", { id }),
   agentStop: (id: number) => invoke<void>("agent_stop", { id }),
+  agentChanges: (id: number) => invoke<FileChange[]>("agent_changes", { id }),
+  agentKeep: (id: number) => invoke<void>("agent_keep", { id }),
+  agentUndo: (id: number) => invoke<string[]>("agent_undo", { id }),
   loadChat: <T>(key: string) => invoke<T[]>("load_chat", { key }),
   saveChat: <T>(key: string, messages: T[]) => invoke<void>("save_chat", { key, messages }),
   /** Files changed on disk (workspace-relative), from the app or anything else. Returns unlisten. */
