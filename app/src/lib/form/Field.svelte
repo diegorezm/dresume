@@ -137,4 +137,9 @@
     resize: none;
     overflow: hidden;
   }
+  @container (max-width: 520px) {
+    .object {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>

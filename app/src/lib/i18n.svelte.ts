@@ -24,6 +24,7 @@ const en = {
   "nav.newTemplate": "New template",
   "nav.editLayout": "Edit template layout",
   "nav.newResumeWith": "New resume with this template",
+  "nav.toggleSidebar": "Toggle sidebar",
 
   // Home
   "home.subtitle": "Edit the content of a resume, or a template to restyle every resume that uses it.",
@@ -98,6 +99,10 @@ const en = {
   "settings.size": (p) => `Interface size · ${p.n}%`,
 
   // Window
+  "view.label": "Layout",
+  "view.editor": "Editor only",
+  "view.split": "Editor and preview (Ctrl+\\)",
+  "view.preview": "Preview only",
   "window.minimize": "Minimize",
   "window.maximize": "Maximize",
   "window.restore": "Restore",
@@ -169,6 +174,7 @@ const pt: Record<Key, Entry> = {
   "nav.newTemplate": "Novo template",
   "nav.editLayout": "Editar layout do template",
   "nav.newResumeWith": "Novo currículo com este template",
+  "nav.toggleSidebar": "Mostrar/ocultar barra lateral",
 
   "home.subtitle": "Edite o conteúdo de um currículo, ou um template para mudar o visual de todos que o usam.",
   "home.templates": (p) => `${p.n} ${plural(p.n, "template", "templates")}`,
@@ -236,6 +242,10 @@ const pt: Record<Key, Entry> = {
   "settings.size": (p) => `Tamanho da interface · ${p.n}%`,
 
   "window.minimize": "Minimizar",
+  "view.label": "Layout",
+  "view.editor": "Só o editor",
+  "view.split": "Editor e preview (Ctrl+\\)",
+  "view.preview": "Só o preview",
   "window.maximize": "Maximizar",
   "window.restore": "Restaurar",
 

@@ -206,4 +206,9 @@
     border-color: var(--accent);
     background: var(--accent-soft);
   }
+  @container (max-width: 520px) {
+    .basics {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>
