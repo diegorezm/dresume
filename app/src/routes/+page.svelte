@@ -1,5 +1,6 @@
 <script lang="ts">
   import { t } from "$lib/i18n.svelte";
+  import { isShortcut, layout } from "$lib/layout.svelte";
   import { open } from "@tauri-apps/plugin-dialog";
   import { api, type Summary } from "$lib/api";
   import { appearance } from "$lib/theme.svelte";
@@ -57,10 +58,19 @@
     ws = await api.summary();
   }
 
+  function onkeydown(e: KeyboardEvent) {
+    if (ws && isShortcut(e, "b")) {
+      e.preventDefault();
+      layout.toggleSidebar();
+    }
+  }
+
   function initial(name: string) {
     return name.trim().charAt(0).toUpperCase() || "?";
   }
 </script>
+
+<svelte:window {onkeydown} />
 
 {#if !ws}
   <main class="welcome">
@@ -103,8 +113,8 @@
     <footer class="welcome-foot">{t("welcome.footer")}</footer>
   </main>
 {:else}
-  <div class="shell">
-    <aside>
+  <div class="shell" class:no-sidebar={!layout.sidebar}>
+    <aside aria-hidden={!layout.sidebar}>
       <button class="ws" onclick={() => (view = { kind: "home" })} title={ws.root}>
         <span class="ws-icon">{initial(ws.name)}</span>
         <span class="ws-name">{ws.name}</span>
@@ -442,9 +452,22 @@
   .shell {
     display: grid;
     grid-template-columns: 240px 1fr;
+    transition: grid-template-columns 0.2s ease;
     height: 100%;
   }
+  .shell.no-sidebar {
+    grid-template-columns: 0 1fr;
+  }
+  .shell.no-sidebar aside {
+    visibility: hidden;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .shell {
+      transition: none;
+    }
+  }
   aside {
+    min-width: 0;
     background: var(--sidebar);
     border-right: 1px solid var(--border);
     overflow: auto;

@@ -3,6 +3,7 @@
   import { getCurrentWindow } from "@tauri-apps/api/window";
   import { appearance } from "./theme.svelte";
   import Logo from "./Logo.svelte";
+  import { layout } from "./layout.svelte";
 
   const win = getCurrentWindow();
   let maximized = $state(false);
@@ -25,6 +26,15 @@
   <div class="brand" data-tauri-drag-region>
     <span class="logo"><Logo size={18} /></span>
     <span data-tauri-drag-region>dresume</span>
+    <button
+      class="sidebar-toggle"
+      title="{t('nav.toggleSidebar')} (Ctrl+B)"
+      aria-label={t("nav.toggleSidebar")}
+      aria-pressed={layout.sidebar}
+      onclick={() => layout.toggleSidebar()}
+    >
+      <svg viewBox="0 0 16 16"><path d="M2 3h12v10H2z M6 3v10" /></svg>
+    </button>
   </div>
   <div class="controls">
     <button aria-label={t("window.minimize")} onclick={() => win.minimize()}>
@@ -67,6 +77,25 @@
   .logo {
     display: grid;
     pointer-events: none;
+  }
+  .sidebar-toggle {
+    margin-left: 0.4rem;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-sm);
+    padding: 0.2rem 0.35rem;
+    color: var(--muted);
+    display: grid;
+    place-items: center;
+  }
+  .sidebar-toggle:hover {
+    background: var(--surface-2);
+    color: var(--text);
+  }
+  .sidebar-toggle svg {
+    width: 14px;
+    height: 14px;
+    stroke-width: 1.2;
   }
   .controls {
     display: flex;
