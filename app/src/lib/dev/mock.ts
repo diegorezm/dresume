@@ -5,6 +5,7 @@ import { mockIPC } from "@tauri-apps/api/mocks";
 export async function installMock() {
   const fixture = (await import("./fixture.json")).default as any;
   let settings: Record<string, unknown> = { lastWorkspace: fixture.summary.root };
+  const hidden: Record<string, string[]> = {};
 
   mockIPC((cmd, args: any) => {
     switch (cmd) {
@@ -15,6 +16,11 @@ export async function installMock() {
       case "get_resume": return fixture.resumes[args.id];
       case "get_schema": return fixture.schemas[args.template];
       case "get_profile": return fixture.profile;
+      case "profile_visibility": return {
+        fields: ["name", "title", "email", "phone", "location", "website", "github", "linkedin"],
+        templates: fixture.summary.templates.map((t: any) => ({ id: t.id, name: t.name, hidden: hidden[t.id] ?? [] })),
+      };
+      case "set_profile_hidden": hidden[args.template] = args.hidden; return null;
       case "save_resume": fixture.resumes[args.id] = args.value; return [];
       case "preview_resume": return { svg: fixture.svg[args.id] ?? [], diagnostics: fixture.diagnostics[args.id] ?? [] };
       case "template_files": {

@@ -36,6 +36,12 @@ export interface SchemaError {
   message: string;
 }
 
+/** Which profile fields each template shows (hidden = left out of that template). */
+export interface ProfileVisibility {
+  fields: string[];
+  templates: { id: string; name: string; hidden: string[] }[];
+}
+
 export interface Preview {
   svg: string[];
   diagnostics: Diagnostic[];
@@ -49,6 +55,9 @@ export const api = {
   getSchema: (template: string) => invoke<Schema>("get_schema", { template }),
   getProfile: () => invoke<string>("get_profile"),
   saveProfile: (text: string) => invoke<void>("save_profile", { text }),
+  profileVisibility: () => invoke<ProfileVisibility>("profile_visibility"),
+  setProfileHidden: (template: string, hidden: string[]) =>
+    invoke<void>("set_profile_hidden", { template, hidden }),
   saveResume: (id: string, value: Json) => invoke<SchemaError[]>("save_resume", { id, value }),
   newResume: (id: string, template: string) => invoke<ResumeInfo>("new_resume", { id, template }),
   duplicateResume: (id: string, from: string) => invoke<ResumeInfo>("duplicate_resume", { id, from }),

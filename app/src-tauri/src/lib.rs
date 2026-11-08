@@ -3,8 +3,8 @@ use std::path::PathBuf;
 use std::sync::Mutex;
 
 use dresume_core::{
-    Diagnostic, Formats, Overlay, ResumeInfo, SchemaError, TemplateInfo, Workspace, compile,
-    compile_template_preview,
+    Diagnostic, Formats, Overlay, ProfileVisibility, ResumeInfo, SchemaError, TemplateInfo,
+    Workspace, compile, compile_template_preview,
 };
 use serde::Serialize;
 use serde_json::Value;
@@ -89,6 +89,16 @@ fn save_profile(state: State<AppState>, text: String) -> CmdResult<()> {
         serde_yaml::from_str::<Value>(&text)?;
         Ok(fs::write(ws.root().join("profile.yaml"), text)?)
     })
+}
+
+#[tauri::command]
+fn profile_visibility(state: State<AppState>) -> CmdResult<ProfileVisibility> {
+    with_ws(&state, |ws| ws.profile_visibility())
+}
+
+#[tauri::command]
+fn set_profile_hidden(state: State<AppState>, template: String, hidden: Vec<String>) -> CmdResult<()> {
+    with_ws(&state, |ws| ws.set_hidden_profile_fields(&template, &hidden))
 }
 
 #[tauri::command]
@@ -266,6 +276,8 @@ pub fn run() {
             get_schema,
             get_profile,
             save_profile,
+            profile_visibility,
+            set_profile_hidden,
             save_resume,
             new_resume,
             duplicate_resume,

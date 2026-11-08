@@ -41,6 +41,7 @@ const en = {
   "common.delete": "Delete",
   "common.creating": "Creating…",
   "common.saved": "Saved",
+  "common.resize": "Drag to resize",
 
   // Resume editor
   "resume.exportPdf": "Export PDF",
@@ -57,6 +58,12 @@ const en = {
   "profile.title": "Profile",
   "profile.shared": "shared by every resume",
   "profile.saved": "Saved — applies to every resume",
+  "profile.visibility": "Show in templates",
+  "profile.visibilityHint": "Pick which fields each template puts on the resume. Changes apply to every resume using that template.",
+  "profile.alwaysShown": "Always shown",
+  "profile.noTemplates": "Save some fields and create a template to choose what shows where.",
+  "profile.tipsTitle": "Links",
+  "profile.tipLinks": "Write a link as a plain URL or with a custom label:",
 
   // Preview
   "preview.compiling": "Compiling…",
@@ -177,6 +184,7 @@ const pt: Record<Key, Entry> = {
   "common.delete": "Excluir",
   "common.creating": "Criando…",
   "common.saved": "Salvo",
+  "common.resize": "Arraste para redimensionar",
 
   "resume.exportPdf": "Exportar PDF",
   "resume.confirmDelete": (p) => `Excluir o currículo "${p.id}"? Isso apaga resumes/${p.id}.yaml.`,
@@ -190,6 +198,12 @@ const pt: Record<Key, Entry> = {
   "profile.title": "Perfil",
   "profile.shared": "compartilhado por todos os currículos",
   "profile.saved": "Salvo — vale para todos os currículos",
+  "profile.visibility": "Mostrar nos templates",
+  "profile.visibilityHint": "Escolha quais campos cada template coloca no currículo. Vale para todos os currículos daquele template.",
+  "profile.alwaysShown": "Sempre aparece",
+  "profile.noTemplates": "Salve alguns campos e crie um template para escolher o que aparece onde.",
+  "profile.tipsTitle": "Links",
+  "profile.tipLinks": "Escreva um link como URL simples ou com um texto personalizado:",
 
   "preview.compiling": "Compilando…",
   "preview.errors": (p) => `${p.n} ${plural(p.n, "erro", "erros")}`,
