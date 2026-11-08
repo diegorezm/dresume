@@ -61,7 +61,7 @@ dresume duplicate <id> --from <resume>      # new resume with a copy of another 
 dresume new-template <id> --name <name> [--from <template>|@starter]
 dresume profile-fields [<template> --hide phone,github]   # which profile fields each template shows
 dresume mcp                                 # MCP server over stdio with the same tools (list, schema,
-                                            # show, validate, build, preview_template)
+                                            # show, validate, build, new_template, preview_template)
 ```
 
 To add the tools to your agent: `claude mcp add dresume -- dresume -w <workspace> mcp` (or the equivalent

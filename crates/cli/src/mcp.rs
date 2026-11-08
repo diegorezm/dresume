@@ -89,6 +89,19 @@ fn tools() -> Value {
             "inputSchema": { "type": "object", "properties": { "id": id }, "required": ["id"] },
         },
         {
+            "name": "new_template",
+            "description": "Create templates/<id>/ as a copy of another template (or \"@starter\", the built-in basic one). Edit its files afterwards.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string", "description": "New template id: letters, digits, - and _" },
+                    "name": { "type": "string", "description": "Display name" },
+                    "from": { "type": "string", "description": "Template id to copy, or \"@starter\"" },
+                },
+                "required": ["id", "name"],
+            },
+        },
+        {
             "name": "preview_template",
             "description": "Compile a template with its sample.yaml to check it for errors.",
             "inputSchema": { "type": "object", "properties": { "template": template }, "required": ["template"] },
@@ -133,6 +146,11 @@ fn call(start: &Path, name: &str, args: &Value) -> Result<(Value, bool)> {
                 None => None,
             };
             Ok((json!({ "id": id, "ok": output.ok(), "pdf": path, "diagnostics": output.diagnostics }), output.ok()))
+        }
+        "new_template" => {
+            let from = args["from"].as_str().unwrap_or("@starter");
+            let info = ws.new_template(str_arg("id")?, str_arg("name")?, Some(from))?;
+            Ok((json!(info), true))
         }
         "preview_template" => {
             let template = str_arg("template")?;
