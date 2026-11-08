@@ -13,8 +13,10 @@ dresume is a resume manager built on [Typst](https://typst.app/):
 - A **resume** is content only (YAML) and links to a template with `template: <id>`.
 - Changing a template restyles every resume linked to it.
 
-Three front doors over the same library: a Rust **core**, a **CLI** (`dresume`, JSON output for agents),
-and a **desktop app** (Tauri 2 + SvelteKit/Svelte 5).
+Three front doors over the same library: a Rust **core**, a **CLI** (`dresume`, JSON output and an MCP
+server for agents), and a **desktop app** (Tauri 2 + SvelteKit/Svelte 5). The app also drives the AI agents
+already installed on the user's machine (Claude Code, Codex, Gemini CLI, OpenCode): it never calls a model
+API itself.
 
 ## Repository map
 
@@ -30,9 +32,21 @@ crates/
     src/profile.rs            profile handed to templates: link normalization + per-template `profile.hide`
     assets/AGENTS.md          guide copied into every new workspace (user-facing, agent-oriented)
     assets/starter/           "Basic" template embedded with include_str! and written by `init`
+  agent/                      dresume-agent: spawns local agent CLIs, one AgentEvent stream for all
+    src/lib.rs                AgentKind, detect(), start()/start_acp(), Session, AgentEvent, PermissionMode
+    src/claude.rs             `claude -p` stream-json; approvals via control_request can_use_tool
+    src/codex.rs              `codex app-server` JSON-RPC; approvals as server requests
+    src/acp.rs                Agent Client Protocol (gemini --acp, opencode acp, any ACP agent)
+    src/rpc.rs                tiny JSON-RPC helper shared by codex + acp
+    src/process.rs            PATH lookup, `.cmd` shims, no console windows, process-tree kill
+    src/snapshot.rs           workspace snapshot → diffs of what the agent changed + undo
+    examples/chat.rs          manual run against a real agent (`--example chat -- claude <dir> "<prompt>"`)
   cli/src/main.rs             `dresume` binary (clap). Every command supports --json
+  cli/src/mcp.rs              `dresume mcp`: MCP stdio server (list, schema, show, validate, build, preview_template)
 app/                          desktop app
   src-tauri/src/lib.rs        Tauri commands: thin wrappers over dresume-core + settings/themes I/O
+  src-tauri/src/agent.rs      agent commands (start/send/respond/cancel/changes/keep/undo) + chat history
+  src-tauri/src/watch.rs      workspace watcher → `workspace-changed` event (live reload of outside edits)
   src-tauri/tauri.conf.json   window config (custom title bar: decorations=false, dragDropEnabled=false)
   src-tauri/capabilities/     Tauri permissions; add window/plugin permissions here
   src/routes/+layout.svelte   loads app.css, settings/theme, title bar; dev IPC mock outside Tauri
@@ -41,7 +55,8 @@ app/                          desktop app
   src/lib/api.ts              typed `invoke` wrappers for every Tauri command + shared types + slug()
   src/lib/theme.svelte.ts     themes (built-ins), settings model, applies CSS variables
   src/lib/i18n.svelte.ts      UI translations (en = source of truth, pt) and t()
-  src/lib/ResumeEditor.svelte content editor + live preview + PDF export
+  src/lib/ResumeEditor.svelte content editor + live preview + PDF export + agent panel (Ctrl+J)
+  src/lib/AgentPanel.svelte   chat with the local agent: tool calls, approvals, diff + keep/undo
   src/lib/TemplateEditor.svelte template code editor (tabs per file) + preview against sample.yaml
   src/lib/ProfileEditor.svelte profile.yaml editor + "show in templates" visibility table
   src/lib/CodeEditor.svelte   CodeMirror 6 wrapper, themed through CSS variables
@@ -53,7 +68,7 @@ app/                          desktop app
   src/lib/form/               schema-driven content form (ResumeForm > Field > ItemList/BulletList/TagInput)
   src/lib/Modal.svelte        shared dialog shell + .m-* classes for dialog bodies
   src/lib/New*Dialog.svelte   create template / create resume dialogs
-  src/lib/SettingsView.svelte language, theme, accent, font, corners, scale
+  src/lib/SettingsView.svelte language, theme, accent, font, corners, scale, AI agent + permission mode
   src/lib/TitleBar.svelte     custom window title bar
   src/lib/dev/mock.ts         fake backend for `pnpm dev` in a browser (data from fixture.json)
   scripts/dev-fixture.mjs     builds src/lib/dev/fixture.json from example/ using the CLI
@@ -77,7 +92,11 @@ docs/images/                  README images (rendered with the typst CLI)
 5. **Unsaved edits use the overlay.** Live preview passes in-memory file contents
    (`Overlay`: workspace-relative path → text) instead of writing to disk.
 6. **Agent-friendly by default.** New CLI commands support `--json`, return non-zero on failure, and are
-   documented in `crates/core/assets/AGENTS.md` (then copied to `example/AGENTS.md`).
+   documented in `crates/core/assets/AGENTS.md` (then copied to `example/AGENTS.md`). Tools agents
+   should call often also belong in `dresume mcp`.
+7. **Local agents only.** The app spawns agent CLIs the user installed and logged into; no API keys, no
+   model calls from dresume. Each driver maps its protocol to `AgentEvent` so the UI never special-cases an
+   agent. The agent works on the real files; the snapshot gives review and undo, the watcher the preview.
 
 ## Conventions
 
@@ -129,6 +148,11 @@ User themes are JSON files with the same shape in `<app config>/themes/`.
 **Add a language:** add a dictionary typed `Record<Key, Entry>` in `i18n.svelte.ts`, register it in
 `LOCALES` and `dictionaries`, and update `systemLocale()`.
 
+**Add an agent:** if it speaks ACP, add an `AgentKind` variant that calls `acp::run(program, args, …)`.
+Otherwise write a driver module (see `codex.rs`): parse its stdout, emit `AgentEvent`s, map approvals to
+`Permission` events and honor `PermissionMode`; pass `SessionOptions::mcp` in its config format. Add the
+kind to `AgentKind` in `api.ts`, then check it live with `cargo run -p dresume-agent --example chat`.
+
 **Change the starter template:** edit `crates/core/assets/starter/*`. It's written by `Workspace::init` and
 offered as `--from @starter` / "Basic" when creating templates.
 
@@ -137,7 +161,7 @@ offered as `--from @starter` / "Basic" when creating templates.
 ```bash
 # Rust
 cargo build --workspace
-cargo test -p dresume-core
+cargo test -p dresume-core -p dresume-agent
 cargo run -p dresume-cli -- -w example list
 cargo run -p dresume-cli -- -w example build            # PDFs into example/output/
 cargo run -p dresume-cli -- -w example preview-template academic
@@ -167,6 +191,11 @@ Before finishing a change: `cargo build --workspace`, `cargo test -p dresume-cor
 - Fonts: system + Typst's embedded set + `<workspace>/fonts/`. Templates that should work everywhere use
   embedded fonts (Libertinus Serif, New Computer Modern, DejaVu Sans Mono).
 - In Git Bash on Windows, set `MSYS_NO_PATHCONV=1` before passing `/path` inputs to the `typst` CLI.
+- Agent CLIs installed by npm are `.cmd` shims on Windows: they run through `cmd /C`, which re-parses
+  arguments. Pass long text (instructions, MCP config) through files or stdin, never as arguments.
+- `canonicalize` adds `\\?\` on Windows; agents get the plain path (`plain_path`) or relative titles break.
+- Claude's `--permission-prompt-tool stdio` is what makes approvals arrive on stdout; without it, edits in
+  `default` mode are just denied.
 
 ## License
 
