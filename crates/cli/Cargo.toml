@@ -1,0 +1,15 @@
+[package]
+name = "dresume-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "dresume"
+path = "src/main.rs"
+
+[dependencies]
+dresume-core.workspace = true
+anyhow.workspace = true
+serde_json.workspace = true
+clap = { version = "4", features = ["derive"] }
