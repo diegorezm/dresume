@@ -42,6 +42,22 @@
   list(..items, indent: 0.4em, body-indent: 0.5em, spacing: 0.45em)
 }
 
+// One contact entry from the profile. dresume turns plain URLs into {label, url}.
+#let contact(value) = {
+  if type(value) == dictionary and "url" in value { link(value.url, value.label) }
+  else if type(value) == str and value.match(regex("^[^@\s]+@[^@\s]+\.[^@\s]+$")) != none { link("mailto:" + value, value) }
+  else if type(value) in (str, int, float) { str(value) }
+}
+
+// Every profile field except the ones rendered elsewhere, in file order.
+#let contacts(profile, skip: ("name", "title", "photo")) = (
+  profile
+    .pairs()
+    .filter(((key, value)) => key not in skip and type(value) != array)
+    .map(((key, value)) => contact(value))
+    .filter(c => c != none)
+)
+
 // Bolds the CV owner's name inside an author list.
 #let authors(names) = names.map(a => if a == profile.name { strong(a) } else { a }).join(", ", last: " and ")
 
@@ -56,16 +72,8 @@
   ]
   #v(-0.3em)
   #set text(size: 9.5pt)
-  #{
-    let parts = ()
-    if "email" in profile { parts.push(link("mailto:" + profile.email, profile.email)) }
-    if "phone" in profile { parts.push(profile.phone) }
-    if "location" in profile { parts.push(profile.location) }
-    for key in ("website", "github", "linkedin", "orcid", "scholar") {
-      if key in profile { parts.push(link(profile.at(key).url, profile.at(key).label)) }
-    }
-    parts.join([ #h(0.4em) · #h(0.4em) ])
-  }
+  #contacts(profile).join([ #h(0.4em) · #h(0.4em) ])
+
 ]
 
 #if "summary" in resume [

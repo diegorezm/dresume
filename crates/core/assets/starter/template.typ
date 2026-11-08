@@ -18,6 +18,22 @@
   #line(length: 100%, stroke: 0.5pt + muted.lighten(60%))
 ]
 
+// One contact entry from the profile. dresume turns plain URLs into {label, url}.
+#let contact(value) = {
+  if type(value) == dictionary and "url" in value { link(value.url, value.label) }
+  else if type(value) == str and value.match(regex("^[^@\s]+@[^@\s]+\.[^@\s]+$")) != none { link("mailto:" + value, value) }
+  else if type(value) in (str, int, float) { str(value) }
+}
+
+// Every profile field except the ones rendered elsewhere, in file order.
+#let contacts(profile, skip: ("name", "title", "photo")) = (
+  profile
+    .pairs()
+    .filter(((key, value)) => key not in skip and type(value) != array)
+    .map(((key, value)) => contact(value))
+    .filter(c => c != none)
+)
+
 #let entry(left, right) = grid(
   columns: (1fr, auto),
   column-gutter: 1em,
@@ -31,14 +47,7 @@
 #v(-0.3em)
 #{
   set text(size: 9pt)
-  let parts = ()
-  if "email" in profile { parts.push(link("mailto:" + profile.email, profile.email)) }
-  if "phone" in profile { parts.push(profile.phone) }
-  if "location" in profile { parts.push(profile.location) }
-  for key in ("website", "github", "linkedin") {
-    if key in profile { parts.push(link(profile.at(key).url, profile.at(key).label)) }
-  }
-  parts.join(text(fill: muted, "  ·  "))
+  contacts(profile).join(text(fill: muted, "  ·  "))
 }
 
 = Summary

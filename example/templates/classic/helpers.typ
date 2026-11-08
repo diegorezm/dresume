@@ -14,17 +14,34 @@
   }
 }
 
-// Full contact row generated from profile.yaml.
-#let contact-row(profile) = [
-  #contact-item("envelope", profile.email, url: "mailto:" + profile.email)
-  #h(1em)
-  #contact-item("phone", profile.phone)
-  #h(1em)
-  #contact-item("location-dot", profile.location)
-  #h(1em)
-  #contact-item("linkedin", profile.linkedin.label, url: profile.linkedin.url, brand: true)
-  #h(1em)
-  #contact-item("github", profile.github.label, url: profile.github.url, brand: true)
-  #h(1em)
-  #contact-item("globe", profile.website.label, url: profile.website.url)
-]
+// Icon per known profile field; other fields are shown without an icon.
+#let icons = (
+  email: ("envelope", false),
+  phone: ("phone", false),
+  location: ("location-dot", false),
+  linkedin: ("linkedin", true),
+  github: ("github", true),
+  website: ("globe", false),
+)
+
+// Full contact row from the profile, in file order. Hidden or missing fields are skipped.
+#let contact-row(profile) = {
+  let items = ()
+  for (key, value) in profile.pairs() {
+    if key in ("name", "title", "photo") or type(value) == array { continue }
+    let (icon, brand) = icons.at(key, default: (none, false))
+    let (label, url) = if type(value) == dictionary and "url" in value {
+      (value.label, value.url)
+    } else if key == "email" {
+      (value, "mailto:" + value)
+    } else {
+      (str(value), none)
+    }
+    items.push(if icon == none {
+      if url == none { label } else { link(url, label) }
+    } else {
+      contact-item(icon, label, url: url, brand: brand)
+    })
+  }
+  items.join(h(1em))
+}
