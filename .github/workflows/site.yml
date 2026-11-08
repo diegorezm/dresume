@@ -3,7 +3,7 @@ name: Site
 on:
   push:
     branches: [main]
-    paths: [site/**, docs/images/**, assets/**, app/src/lib/**, crates/cli/src/**, .github/workflows/site.yml]
+    paths: [site/**, crates/cli/**, docs/images/**, assets/**, app/src/lib/**, crates/cli/src/**, .github/workflows/site.yml]
   workflow_dispatch:
 
 permissions:
@@ -26,6 +26,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - run: npm ci
+        working-directory: site
       - run: node site/build.mjs
       - uses: actions/upload-pages-artifact@v3
         with:

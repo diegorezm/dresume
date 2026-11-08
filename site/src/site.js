@@ -17,13 +17,6 @@ document.querySelectorAll(".theme-card").forEach((b) =>
 );
 mark();
 
-// Mobile menu.
-const menu = document.querySelector(".menu-btn");
-menu?.addEventListener("click", () => {
-  const open = document.body.classList.toggle("menu-open");
-  menu.setAttribute("aria-expanded", String(open));
-});
-
 // Nav shadow once scrolled.
 const nav = document.querySelector(".nav");
 const onScroll = () => nav.classList.toggle("scrolled", scrollY > 8);

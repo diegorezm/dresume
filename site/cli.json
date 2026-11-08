@@ -1,0 +1,308 @@
+{
+  "about": "Resume workspaces powered by Typst",
+  "global": [
+    {
+      "name": "workspace",
+      "long": "workspace",
+      "short": "w",
+      "positional": false,
+      "required": false,
+      "multiple": false,
+      "flag": false,
+      "help": "Workspace directory (defaults to the nearest parent with dresume.yaml)",
+      "default": null
+    },
+    {
+      "name": "json",
+      "long": "json",
+      "short": null,
+      "positional": false,
+      "required": false,
+      "multiple": false,
+      "flag": true,
+      "help": "Print machine-readable JSON instead of text",
+      "default": null
+    }
+  ],
+  "commands": [
+    {
+      "name": "init",
+      "about": "Create a new workspace in the given directory",
+      "args": [
+        {
+          "name": "dir",
+          "long": null,
+          "short": null,
+          "positional": true,
+          "required": true,
+          "multiple": false,
+          "flag": false,
+          "help": null,
+          "default": null
+        },
+        {
+          "name": "name",
+          "long": "name",
+          "short": null,
+          "positional": false,
+          "required": false,
+          "multiple": false,
+          "flag": false,
+          "help": null,
+          "default": "My resumes"
+        }
+      ]
+    },
+    {
+      "name": "list",
+      "about": "List templates and the resumes linked to each",
+      "args": []
+    },
+    {
+      "name": "build",
+      "about": "Compile resumes to PDF (all when no id is given)",
+      "args": [
+        {
+          "name": "ids",
+          "long": null,
+          "short": null,
+          "positional": true,
+          "required": false,
+          "multiple": true,
+          "flag": false,
+          "help": null,
+          "default": null
+        },
+        {
+          "name": "out",
+          "long": "out",
+          "short": "o",
+          "positional": false,
+          "required": false,
+          "multiple": false,
+          "flag": false,
+          "help": "Output directory",
+          "default": "output"
+        },
+        {
+          "name": "format",
+          "long": "format",
+          "short": "f",
+          "positional": false,
+          "required": false,
+          "multiple": false,
+          "flag": false,
+          "help": "`svg` writes one `<id>-<page>.svg` per page",
+          "default": "pdf"
+        }
+      ]
+    },
+    {
+      "name": "show",
+      "about": "Print a resume's content as JSON",
+      "args": [
+        {
+          "name": "id",
+          "long": null,
+          "short": null,
+          "positional": true,
+          "required": true,
+          "multiple": false,
+          "flag": false,
+          "help": null,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "preview-template",
+      "about": "Compile a template with its own sample.yaml, to check it while editing",
+      "args": [
+        {
+          "name": "template",
+          "long": null,
+          "short": null,
+          "positional": true,
+          "required": true,
+          "multiple": false,
+          "flag": false,
+          "help": null,
+          "default": null
+        },
+        {
+          "name": "out",
+          "long": "out",
+          "short": "o",
+          "positional": false,
+          "required": false,
+          "multiple": false,
+          "flag": false,
+          "help": "Output PDF path",
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "validate",
+      "about": "Validate resumes against their template schema (all when no id is given)",
+      "args": [
+        {
+          "name": "ids",
+          "long": null,
+          "short": null,
+          "positional": true,
+          "required": false,
+          "multiple": true,
+          "flag": false,
+          "help": null,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "new",
+      "about": "Create a resume from a template's sample content",
+      "args": [
+        {
+          "name": "id",
+          "long": null,
+          "short": null,
+          "positional": true,
+          "required": true,
+          "multiple": false,
+          "flag": false,
+          "help": null,
+          "default": null
+        },
+        {
+          "name": "template",
+          "long": "template",
+          "short": "t",
+          "positional": false,
+          "required": true,
+          "multiple": false,
+          "flag": false,
+          "help": null,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "duplicate",
+      "about": "Create a resume with a copy of another resume's content",
+      "args": [
+        {
+          "name": "id",
+          "long": null,
+          "short": null,
+          "positional": true,
+          "required": true,
+          "multiple": false,
+          "flag": false,
+          "help": null,
+          "default": null
+        },
+        {
+          "name": "from",
+          "long": "from",
+          "short": null,
+          "positional": false,
+          "required": true,
+          "multiple": false,
+          "flag": false,
+          "help": null,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "new-template",
+      "about": "Create a template, optionally copying an existing one (`--from @starter` copies the built-in Basic)",
+      "args": [
+        {
+          "name": "id",
+          "long": null,
+          "short": null,
+          "positional": true,
+          "required": true,
+          "multiple": false,
+          "flag": false,
+          "help": null,
+          "default": null
+        },
+        {
+          "name": "name",
+          "long": "name",
+          "short": null,
+          "positional": false,
+          "required": true,
+          "multiple": false,
+          "flag": false,
+          "help": null,
+          "default": null
+        },
+        {
+          "name": "from",
+          "long": "from",
+          "short": null,
+          "positional": false,
+          "required": false,
+          "multiple": false,
+          "flag": false,
+          "help": null,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "profile-fields",
+      "about": "Show which profile fields each template shows; with --hide, set them for one template",
+      "args": [
+        {
+          "name": "template",
+          "long": null,
+          "short": null,
+          "positional": true,
+          "required": false,
+          "multiple": false,
+          "flag": false,
+          "help": null,
+          "default": null
+        },
+        {
+          "name": "hide",
+          "long": "hide",
+          "short": null,
+          "positional": false,
+          "required": false,
+          "multiple": false,
+          "flag": false,
+          "help": "Comma-separated profile keys to hide (empty string shows everything)",
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "schema",
+      "about": "Print a template's JSON Schema",
+      "args": [
+        {
+          "name": "template",
+          "long": null,
+          "short": null,
+          "positional": true,
+          "required": true,
+          "multiple": false,
+          "flag": false,
+          "help": null,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "mcp",
+      "about": "Serve the workspace as an MCP server over stdio (tools: list, schema, show, validate, build, preview_template)",
+      "args": []
+    }
+  ]
+}

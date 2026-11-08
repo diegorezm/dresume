@@ -1,40 +1,101 @@
 <main id="top">
-<section class="hero">
-  <div class="glow" aria-hidden="true"></div>
-  <div class="wrap hero-in">
-    <a class="chip accent pill reveal" href="https://github.com/diegorezm/dresume"><span class="pulse"></span>{{hero.badge}}</a>
-    <h1 class="reveal">{{hero.title}}</h1>
-    <p class="lead reveal">{{hero.sub}}</p>
-    <div class="actions reveal">
-      <a class="btn primary" href="{{docsUrl}}#get-started">{{hero.start}} <span aria-hidden="true">→</span></a>
-      <a class="btn" href="https://github.com/diegorezm/dresume">{{hero.github}}</a>
+<section class="panel hero">
+  <span class="spark s1" aria-hidden="true">✦</span><span class="spark s2" aria-hidden="true">✦</span><span class="spark s3" aria-hidden="true">✦</span><span class="spark s4" aria-hidden="true">✦</span><span class="spark s5" aria-hidden="true">✦</span>
+  <a class="badge reveal" href="https://github.com/diegorezm/dresume"><span class="pulse"></span>{{hero.badge}}</a>
+  <h1 class="display reveal">dresume</h1>
+  <p class="kicker reveal">{{hero.kicker}}</p>
+  <p class="lead reveal">{{hero.sub}}</p>
+  <div class="actions reveal">
+    <a class="btn primary" href="{{docsUrl}}#get-started">{{hero.start}} <span aria-hidden="true">→</span></a>
+    <a class="btn" href="https://github.com/diegorezm/dresume">{{hero.github}}</a>
+  </div>
+
+  <div class="pocket reveal" aria-hidden="true">
+    <div class="pocket-back"></div>
+    <div class="pocket-cards">
+      <div class="pc page" style="--r:-7deg"><img src="{{base}}images/template-basic.png" alt=""></div>
+      <div class="pc note" style="--r:3deg"><p>{{pocket.note}}</p><small>— profile.yaml</small></div>
+      <div class="pc page" style="--r:-2deg"><img src="{{base}}images/template-academic.png" alt=""></div>
+      <div class="pc yaml" style="--r:6deg"><code><b>template:</b> basic<br><b>name:</b> Ana<br><b>role:</b> Backend<br><b>skills:</b><br>&nbsp;&nbsp;- Rust<br>&nbsp;&nbsp;- Typst</code><span class="pin"></span><span class="tag">resume.pdf</span></div>
     </div>
-    <ul class="stats reveal">
-      <li>✓ {{stat1}}</li><li>✓ {{stat2}}</li><li>✓ {{stat3}}</li>
-    </ul>
-    <div class="shot reveal">
-      <div class="shot-bar"><i></i><i></i><i></i><span>dresume</span></div>
-      <img src="{{base}}images/app-resume.png" alt="{{hero.shotAlt}}" width="1600" height="1000">
+    <div class="pocket-front"><span>{{pocket.word}}</span><i class="stitch"></i></div>
+  </div>
+</section>
+
+<section id="features" class="panel">
+  <div class="inner">
+    <p class="big reveal">{{bento.lead1}} <em>{{bento.em1}}</em>{{bento.lead2}} <em>{{bento.em2}}</em>{{bento.lead3}}</p>
+    <div class="bento">
+      <div class="tile olive tall reveal">
+        <div class="polas">
+          <figure class="pola" style="--r:-8deg"><img src="{{base}}images/template-basic.png" alt=""><figcaption>backend-en</figcaption></figure>
+          <figure class="pola" style="--r:6deg"><img src="{{base}}images/template-academic.png" alt=""><figcaption>academic-cv</figcaption></figure>
+        </div>
+        <h3>{{f1.t}}</h3><p>{{f1.d}}</p>
+      </div>
+      <div class="tile orange wide reveal">
+        <div class="tags" aria-hidden="true">
+          <span style="--r:-14deg">Typst</span><span style="--r:8deg">YAML</span><span style="--r:-4deg">JSON Schema</span><span style="--r:16deg">PDF / SVG</span><span style="--r:-9deg">CLI --json</span><span style="--r:5deg">MCP</span><span style="--r:-18deg">Claude Code</span><span style="--r:10deg">Codex</span><span style="--r:-3deg">git</span>
+        </div>
+        <div class="tile-text"><h3>{{f5.t}}</h3><p>{{f5.d}}</p></div>
+      </div>
+      <div class="tile cream reveal">
+        <h3>{{f3.t}}</h3>
+        <div class="mini"><img src="{{base}}images/app-template.png" alt="" loading="lazy"></div>
+        <p>{{f3.d}}</p>
+      </div>
+      <div class="tile sage reveal">
+        <h3>{{f2.t}}</h3>
+        <div class="stack" aria-hidden="true"><span>＋ {{bento.addPosition}}</span><span>⋮⋮ Experience</span><span>⋮⋮ Education</span></div>
+        <p>{{f2.d}}</p>
+      </div>
+      <div class="tile cream reveal">
+        <h3>{{f4.t}}</h3>
+<pre class="snip" aria-hidden="true"><code><b>#let</b> resume = yaml(sys.inputs.resume)
+<b>#set</b> text(font: "Libertinus Serif")
+= #resume.name</code></pre>
+        <p>{{f4.d}}</p>
+      </div>
+      <div class="tile accent reveal">
+        <h3>{{f6.t}}</h3>
+        <div class="folder" aria-hidden="true">📁 my-resumes/</div>
+        <p>{{f6.d}}</p>
+      </div>
     </div>
   </div>
 </section>
 
-<section id="features" class="wrap sec">
-  <div class="page-head reveal"><span class="eyebrow">{{eyebrow.features}}</span><h2>{{features.title}}</h2><p>{{features.sub}}</p></div>
-  <div class="grid">
-    <div class="card feat reveal"><span class="ico">🎨</span><h3>{{f1.t}}</h3><p>{{f1.d}}</p></div>
-    <div class="card feat reveal"><span class="ico">✍️</span><h3>{{f2.t}}</h3><p>{{f2.d}}</p></div>
-    <div class="card feat reveal"><span class="ico">👀</span><h3>{{f3.t}}</h3><p>{{f3.d}}</p></div>
-    <div class="card feat reveal"><span class="ico">🧑‍💻</span><h3>{{f4.t}}</h3><p>{{f4.d}}</p></div>
-    <div class="card feat reveal"><span class="ico">🤖</span><h3>{{f5.t}}</h3><p>{{f5.d}}</p></div>
-    <div class="card feat reveal"><span class="ico">📁</span><h3>{{f6.t}}</h3><p>{{f6.d}}</p></div>
+<section class="panel">
+  <div class="inner">
+    <p class="big reveal">{{work.lead1}} <span class="stamp">{{work.stamp}}</span><br>{{work.lead2}} <em>{{work.em1}}</em>, <em>{{work.em2}}</em>{{work.lead3}} <em>{{work.em3}}</em> <span class="dot-orb" aria-hidden="true"></span></p>
+    <div class="work">
+      <div class="stat card reveal">
+        <span class="year">v{{version}}</span>
+        <h3>{{work.title}}</h3>
+        <hr>
+        <div class="num"><b>1 → ∞</b><span>{{work.s1}}</span></div>
+        <div class="num"><b>0</b><span>{{work.s2}}</span></div>
+        <div class="num"><b>6</b><span>{{work.s3}}</span></div>
+      </div>
+      <div class="work-right">
+        <div class="shot-tile reveal"><img src="{{base}}images/app-resume.png" alt="{{hero.shotAlt}}" loading="lazy"></div>
+        <a class="bar reveal" href="{{docsUrl}}">{{cta.docs}} <span aria-hidden="true">⟶</span></a>
+      </div>
+    </div>
+    <div class="tour">
+      <figure class="reveal"><img src="{{base}}images/app-home.png" alt="{{tour.home}}" loading="lazy"><figcaption><b>{{tour.home}}</b> {{tour.homeD}}</figcaption></figure>
+      <figure class="reveal"><img src="{{base}}images/app-new-template.png" alt="{{tour.new}}" loading="lazy"><figcaption><b>{{tour.new}}</b> {{tour.newD}}</figcaption></figure>
+      <figure class="reveal"><img src="{{base}}images/app-settings.png" alt="{{tour.set}}" loading="lazy"><figcaption><b>{{tour.set}}</b> {{tour.setD}}</figcaption></figure>
+    </div>
   </div>
 </section>
 
-<section class="band">
-  <div class="wrap sec split">
+<section class="panel">
+  <div class="inner split">
     <div class="reveal">
-      <div class="page-head"><span class="eyebrow">{{eyebrow.how}}</span><h2>{{how.title}}</h2><p>{{how.sub}}</p></div>
+      <span class="eyebrow">{{eyebrow.how}}</span>
+      <h2 class="title">{{how.title}}</h2>
+      <p class="sub">{{how.sub}}</p>
 <pre class="card tree"><code>my-resumes/
 ├── profile.yaml        <span>← {{how.profile}}</span>
 ├── templates/
@@ -47,40 +108,36 @@
   </div>
 </section>
 
-<section class="wrap sec">
-  <div class="page-head reveal"><span class="eyebrow">{{eyebrow.tour}}</span><h2>{{tour.title}}</h2></div>
-  <div class="tour">
-    <figure class="card reveal"><img src="{{base}}images/app-home.png" alt="{{tour.home}}" loading="lazy"><figcaption><b>{{tour.home}}</b> {{tour.homeD}}</figcaption></figure>
-    <figure class="card reveal"><img src="{{base}}images/app-template.png" alt="{{tour.tpl}}" loading="lazy"><figcaption><b>{{tour.tpl}}</b> {{tour.tplD}}</figcaption></figure>
-    <figure class="card reveal"><img src="{{base}}images/app-new-template.png" alt="{{tour.new}}" loading="lazy"><figcaption><b>{{tour.new}}</b> {{tour.newD}}</figcaption></figure>
-    <figure class="card reveal"><img src="{{base}}images/app-settings.png" alt="{{tour.set}}" loading="lazy"><figcaption><b>{{tour.set}}</b> {{tour.setD}}</figcaption></figure>
-  </div>
-</section>
-
-<section class="wrap sec">
-  <div class="page-head reveal"><span class="eyebrow">{{eyebrow.themes}}</span><h2>{{themes.title}}</h2><p>{{themes.sub}}</p></div>
-  <div class="reveal">{{themes}}</div>
-</section>
-
-<section class="band">
-  <div class="wrap sec split">
+<section class="panel">
+  <div class="inner split">
     <div class="reveal">
-      <div class="page-head"><span class="eyebrow">{{eyebrow.agents}}</span><h2>{{agents.title}}</h2><p>{{agents.sub}}</p></div>
+      <span class="eyebrow">{{eyebrow.agents}}</span>
+      <h2 class="title">{{agents.title}}</h2>
+      <p class="sub">{{agents.sub}}</p>
       <p class="quote">{{agents.prompts}}</p>
     </div>
-<pre class="card term reveal"><code><span class="c"># {{nav.docs}} → CLI</span>
+<pre class="card term reveal"><code><span class="c"># CLI</span>
 <b>$</b> dresume list --json
 <b>$</b> dresume show backend-en
 <b>$</b> dresume validate --json
-<b>$</b> dresume build backend-en --format svg</code></pre>
+<b>$</b> dresume build backend-en --format svg
+<b>$</b> dresume mcp</code></pre>
   </div>
 </section>
 
-<section class="wrap sec">
-  <div class="cta reveal">
-    <h2>{{cta.title}}</h2>
-    <p>{{cta.sub}}</p>
-    <div class="actions"><a class="btn primary" href="{{docsUrl}}">{{cta.docs}} <span aria-hidden="true">→</span></a><a class="btn" href="https://github.com/diegorezm/dresume">{{hero.github}}</a></div>
+<section class="panel">
+  <div class="inner">
+    <span class="eyebrow">{{eyebrow.themes}}</span>
+    <h2 class="title">{{themes.title}}</h2>
+    <p class="sub">{{themes.sub}}</p>
+    <div class="reveal">{{themes}}</div>
   </div>
+</section>
+
+<section class="panel cta">
+  <span class="spark s1" aria-hidden="true">✦</span><span class="spark s3" aria-hidden="true">✦</span>
+  <h2 class="display sm">{{cta.title}}</h2>
+  <p>{{cta.sub}}</p>
+  <div class="actions"><a class="btn primary" href="{{docsUrl}}">{{cta.docs}} <span aria-hidden="true">→</span></a><a class="btn" href="https://github.com/diegorezm/dresume">{{hero.github}}</a></div>
 </section>
 </main>

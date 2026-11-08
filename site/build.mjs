@@ -1,7 +1,9 @@
-// Builds the dresume website (landing + docs, en/pt) into site/dist/. No dependencies: `node site/build.mjs`.
-// Reference sections (CLI, settings, themes, shortcuts) are generated from the app and CLI sources,
-// so the docs follow the code. The build fails when a keyboard shortcut in the app is undocumented.
+// Builds the dresume website (landing + docs, en/pt) into site/dist/: `npm ci && node build.mjs` in site/.
+// Reference sections are generated from the sources so the docs follow the code: the CLI from site/cli.json
+// (exported from clap by a test in crates/cli), settings/themes/labels from the app. The build fails when a
+// keyboard shortcut in the app is undocumented.
 import fs from "node:fs";
+import { Marked } from "marked";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -50,44 +52,7 @@ function appStrings() {
 }
 const APP = appStrings();
 
-/** CLI commands from the clap `Command` enum and its doc comments. */
-function cliCommands() {
-  const src = read("crates/cli/src/main.rs");
-  const body = src.slice(src.indexOf("enum Command {"), src.indexOf("\n}\n", src.indexOf("enum Command {")));
-  const cmds = [];
-  let doc = [];
-  const lines = body.split("\n").slice(1);
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const d = line.match(/^    \/\/\/ ?(.*)/);
-    if (d) { doc.push(d[1]); continue; }
-    const v = line.match(/^    (\w+)(.*)/);
-    if (!v) continue;
-    let fields = v[2];
-    if (fields.trim() === "{") while (!lines[++i].startsWith("    }")) fields += "\n" + lines[i];
-    const kebab = v[1].replace(/[a-z][A-Z]/g, (s) => `${s[0]}-${s[1]}`).toLowerCase();
-    cmds.push({ name: kebab, doc: doc.join(" "), args: parseFields(fields) });
-    doc = [];
-  }
-  return cmds;
-}
-
-function parseFields(text) {
-  const args = [];
-  const re = /(?:\/\/\/ ?(.*)\n\s*)?(?:#\[arg\(([^)]*)\)\]\s*)?(\w+): ([\w<>]+)/g;
-  for (const m of text.matchAll(re)) {
-    const [, doc, attr, name, type] = m;
-    const flags = attr ? attr.split(",").map((s) => s.trim()) : [];
-    const def = flags.find((f) => f.startsWith("default_value"))?.split("=")[1].trim().replace(/"/g, "");
-    const optional = type.startsWith("Option") || type.startsWith("Vec") || def !== undefined;
-    let usage;
-    if (!attr) usage = type.startsWith("Vec") ? `${name}…` : `<${name}>`;
-    else usage = [flags.includes("short") && `-${name[0]}`, flags.includes("long") && `--${name}`].filter(Boolean).join(", ") + ` <${name}>`;
-    args.push({ usage: optional ? `[${usage}]` : usage, doc, def: def?.includes("::") ? def.split("::")[1].toLowerCase() : def });
-  }
-  return args;
-}
-const CLI = cliCommands();
+const CLI = JSON.parse(read("site/cli.json"));
 
 /** Keys used with Ctrl/Cmd in the app's components. */
 function shortcutKeys() {
@@ -106,92 +71,50 @@ function shortcutKeys() {
   return [...keys];
 }
 
-// ---------- tiny markdown ----------
+// ---------- markdown ----------
 
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const slug = (s) => s.toLowerCase().replace(/<[^>]+>/g, "").replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "");
+const inline = (s) => new Marked().parseInline(s ?? "");
 
-function inline(s) {
-  return s
-    .split(/(`[^`]+`)/)
-    .map((part) =>
-      part.startsWith("`") && part.endsWith("`") && part.length > 1
-        ? `<code>${esc(part.slice(1, -1))}</code>`
-        : esc(part)
-            .replace(/&lt;(\/?kbd)&gt;/g, "<$1>")
-            .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-            .replace(/\*(.+?)\*/g, "<em>$1</em>")
-            .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>'),
-    )
-    .join("");
-}
-
+/** Markdown to HTML plus a table of contents. `## Title {#id}` sets the anchor, so both languages share it. */
 function markdown(src) {
-  const lines = src.split("\n");
   const toc = [];
-  let html = "";
-  for (let i = 0; i < lines.length; ) {
-    const line = lines[i];
-    let m;
-    if (!line.trim()) { i++; continue; }
-    if (line.startsWith("```")) {
-      const lang = line.slice(3).trim();
-      const code = [];
-      while (++i < lines.length && !lines[i].startsWith("```")) code.push(lines[i]);
-      i++;
-      html += `<pre${lang ? ` data-lang="${lang}"` : ""}><code>${esc(code.join("\n"))}</code></pre>\n`;
-    } else if ((m = line.match(/^(#{1,4}) (.*)/))) {
-      // `## Title {#id}` sets the anchor, so both languages share it.
-      const [, title, custom] = m[2].match(/^(.*?)(?: \{#([\w-]+)\})?$/);
-      const level = m[1].length;
-      const text = inline(title);
-      const id = custom ?? slug(title);
-      if (level === 2 || level === 3) toc.push({ level, id, text });
-      html += `<h${level} id="${id}"><a class="anchor" href="#${id}">${text}</a></h${level}>\n`;
-      i++;
-    } else if (line.startsWith("|")) {
-      const rows = [];
-      while (i < lines.length && lines[i].startsWith("|")) rows.push(lines[i++]);
-      const cells = (r) => r.replace(/^\||\|$/g, "").split("|").map((c) => inline(c.trim()));
-      html += `<div class="table"><table><thead><tr>${cells(rows[0]).map((c) => `<th>${c}</th>`).join("")}</tr></thead><tbody>`;
-      html += rows.slice(2).map((r) => `<tr>${cells(r).map((c) => `<td>${c}</td>`).join("")}</tr>`).join("");
-      html += "</tbody></table></div>\n";
-    } else if (/^(- |\d+\. )/.test(line)) {
-      const ordered = /^\d/.test(line);
-      const items = [];
-      while (i < lines.length && /^(- |\d+\. |  )/.test(lines[i])) {
-        if (lines[i].startsWith("  ")) items[items.length - 1] += " " + lines[i].trim();
-        else items.push(lines[i].replace(/^(- |\d+\. )/, ""));
-        i++;
-      }
-      const tag = ordered ? "ol" : "ul";
-      html += `<${tag}>${items.map((x) => `<li>${inline(x)}</li>`).join("")}</${tag}>\n`;
-    } else if (line.startsWith("> ")) {
-      const quote = [];
-      while (i < lines.length && lines[i].startsWith("> ")) quote.push(lines[i++].slice(2));
-      html += `<blockquote>${inline(quote.join(" "))}</blockquote>\n`;
-    } else if (/^\{\{\w+\}\}$/.test(line.trim())) {
-      html += line.trim() + "\n";
-      i++;
-    } else {
-      const para = [];
-      while (i < lines.length && lines[i].trim() && !/^(#|```|\||- |\d+\. |> |\{\{)/.test(lines[i])) para.push(lines[i++]);
-      html += `<p>${inline(para.join(" "))}</p>\n`;
-    }
-  }
-  return { html, toc };
+  const md = new Marked({
+    renderer: {
+      heading({ tokens, depth, text }) {
+        const custom = text.match(/ \{#([\w-]+)\}$/)?.[1];
+        const html = this.parser.parseInline(tokens).replace(/ \{#[\w-]+\}$/, "");
+        const id = custom ?? slug(html);
+        if (depth === 2 || depth === 3) toc.push({ level: depth, id, text: html });
+        return `<h${depth} id="${id}"><a class="anchor" href="#${id}">${html}</a></h${depth}>\n`;
+      },
+      code({ text, lang }) {
+        return `<pre${lang ? ` data-lang="${lang}"` : ""}><code>${esc(text)}</code></pre>\n`;
+      },
+      table(token) {
+        return `<div class="table">${this.constructor.prototype.table.call(this, token)}</div>`;
+      },
+    },
+  });
+  return { html: md.parse(src), toc };
 }
 
 // ---------- generated sections ----------
 
+function usage(a) {
+  const name = a.positional ? (a.multiple ? `${a.name}…` : `<${a.name}>`)
+    : [a.short && `-${a.short}`, `--${a.long}`].filter(Boolean).join(", ") + (a.flag ? "" : ` <${a.name}>`);
+  return a.required ? name : `[${name}]`;
+}
+
 function genCli() {
-  return CLI.map((c) => {
-    const usage = ["dresume", c.name, ...c.args.map((a) => a.usage)].join(" ");
-    const opts = c.args.filter((a) => a.doc || a.def);
-    return `<div class="cmd card"><pre><code>${esc(usage)}</code></pre><p>${inline(c.doc)}</p>${
-      opts.length
-        ? `<ul>${opts.map((a) => `<li><code>${esc(a.usage.replace(/^\[|\]$/g, ""))}</code> ${a.doc ? inline(a.doc) : ""}${a.def ? ` <span class="muted">(default: <code>${esc(a.def)}</code>)</span>` : ""}</li>`).join("")}</ul>`
-        : ""
+  const flag = (a) => `<li><code>${esc(usage(a).replace(/^\[|\]$/g, ""))}</code> ${inline(a.help)}${a.default ? ` <span class="muted">(default: <code>${esc(a.default)}</code>)</span>` : ""}</li>`;
+  const global = `<div class="cmd card global"><p><b>${esc(CLI.about)}.</b></p><ul>${CLI.global.map(flag).join("")}</ul></div>`;
+  return global + CLI.commands.map((c) => {
+    const opts = c.args.filter((a) => a.help || a.default);
+    return `<div class="cmd card" id="cli-${c.name}"><pre><code>${esc(["dresume", c.name, ...c.args.map(usage)].join(" "))}</code></pre><p>${inline(c.about)}.</p>${
+      opts.length ? `<ul>${opts.map(flag).join("")}</ul>` : ""
     }</div>`;
   }).join("\n");
 }
@@ -245,8 +168,9 @@ function themeCss() {
     Object.entries(c).map(([k, v]) => `--${k.replace(/[A-Z]/g, (x) => "-" + x.toLowerCase()).replace("surface2", "surface-2")}:${v}`).join(";");
   const light = THEMES.find((t) => t.id === "paper");
   const dark = THEMES.find((t) => t.id === "paper-night");
+  const olive = THEMES.find((t) => t.id === "sage").colors.accent;
   return [
-    `:root{${vars(light.colors)}}`,
+    `:root{${vars(light.colors)};--olive:${olive}}`,
     `@media (prefers-color-scheme: dark){:root:not([data-theme]){${vars(dark.colors)}}}`,
     ...THEMES.map((t) => `:root[data-theme="${t.id}"]{${vars(t.colors)};color-scheme:${t.dark ? "dark" : "light"}}`),
   ].join("\n");
@@ -289,7 +213,7 @@ function build() {
       if (page === "docs") {
         const { html, toc } = markdown(read(`site/content/${lang}/docs.md`));
         const gen = { cli: genCli(), settings: genSettings(lang), themes: genThemes(lang), shortcuts: genShortcuts(lang), themeJson: genThemeJson() };
-        vars.content = html.replace(/\{\{(\w+)\}\}/g, (_, k) => gen[k] ?? `{{${k}}}`);
+        vars.content = html.replace(/(?:<p>)?\{\{(\w+)\}\}(?:<\/p>)?/g, (_, k) => gen[k] ?? `{{${k}}}`);
         vars.toc = toc.map((x) => `<a class="l${x.level}" href="#${x.id}">${x.text}</a>`).join("");
         body = fill(pages.docs, vars);
       } else {
@@ -326,7 +250,7 @@ ${urls
 Allow: /
 Sitemap: ${SITE_URL}sitemap.xml
 `);
-  console.log(`site built: ${path.relative(root, out)} (${CLI.length} commands, ${THEMES.length} themes)`);
+  console.log(`site built: ${path.relative(root, out)} (${CLI.commands.length} commands, ${THEMES.length} themes)`);
 }
 
 build();
