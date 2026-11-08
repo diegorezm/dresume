@@ -106,6 +106,10 @@ fn normalize_link(value: &mut Value) {
             let url = s.trim().to_string();
             *value = serde_json::json!({ "label": pretty_url(&url), "url": url });
         }
+        Value::String(s) if is_bare_domain(s) => {
+            let label = s.trim().trim_end_matches('/').to_string();
+            *value = serde_json::json!({ "url": format!("https://{label}"), "label": label });
+        }
         Value::Object(obj) => {
             if let Some(url) = obj.get("url").and_then(Value::as_str).map(str::to_string) {
                 obj.entry("label").or_insert_with(|| Value::String(pretty_url(&url)));
@@ -118,6 +122,19 @@ fn normalize_link(value: &mut Value) {
 fn is_url(s: &str) -> bool {
     let s = s.trim();
     (s.starts_with("https://") || s.starts_with("http://")) && !s.contains(char::is_whitespace)
+}
+
+/// A URL written without a scheme, like `you.dev` or `github.com/you`.
+fn is_bare_domain(s: &str) -> bool {
+    let s = s.trim();
+    let host = s.split('/').next().unwrap_or("");
+    let Some((name, tld)) = host.rsplit_once('.') else { return false };
+    !s.contains(char::is_whitespace)
+        && !s.contains('@')
+        && !name.is_empty()
+        && host.chars().all(|c| c.is_ascii_alphanumeric() || c == '.' || c == '-')
+        && tld.len() >= 2
+        && tld.chars().all(|c| c.is_ascii_alphabetic())
 }
 
 /// "https://www.github.com/you/" -> "github.com/you"
@@ -142,6 +159,21 @@ mod tests {
         let mut v = serde_json::json!({ "url": "https://github.com/you" });
         normalize_link(&mut v);
         assert_eq!(v["label"], "github.com/you");
+
+        let mut v = Value::String("diegorezm.xyz".into());
+        normalize_link(&mut v);
+        assert_eq!(v["url"], "https://diegorezm.xyz");
+        assert_eq!(v["label"], "diegorezm.xyz");
+
+        let mut v = Value::String("github.com/you/".into());
+        normalize_link(&mut v);
+        assert_eq!(v["url"], "https://github.com/you");
+
+        for text in ["São Paulo, BR", "+55 11 90000-0000", "@you", "v1.2", "Jr. Dev"] {
+            let mut v = Value::String(text.into());
+            normalize_link(&mut v);
+            assert_eq!(v, text, "{text} should stay text");
+        }
 
         let mut v = Value::String("you@example.com".into());
         normalize_link(&mut v);
