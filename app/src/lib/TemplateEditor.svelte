@@ -4,6 +4,8 @@
   import CodeEditor from "./CodeEditor.svelte";
   import Preview from "./Preview.svelte";
   import SplitPane from "./SplitPane.svelte";
+  import ViewSwitch from "./ViewSwitch.svelte";
+  import { isShortcut, layout } from "./layout.svelte";
 
   interface Props {
     template: TemplateInfo;
@@ -74,7 +76,15 @@
     setTimeout(() => editor?.goto(d.line ?? 1, d.column ?? 1));
   }
 
+  /** True while the panes are too narrow to sit side by side. */
+  let narrow = $state(false);
+
   function onkeydown(e: KeyboardEvent) {
+    if (isShortcut(e, "\\")) {
+      e.preventDefault();
+      layout.togglePreview("template");
+      return;
+    }
     if ((e.ctrlKey || e.metaKey) && e.key === "s") {
       e.preventDefault();
       persist();
@@ -84,21 +94,25 @@
 
 <svelte:window {onkeydown} />
 
-<SplitPane id="template">
+<div class="editor">
+  <header class="topbar">
+    <div class="crumbs">
+      <span class="chip">▦ {template.name}</span>
+      <span class="chip muted" title={t("template.previewHint")}>
+        {t("template.usedBy", { n: template.resumes.length })}
+      </span>
+    </div>
+    <div class="actions">
+      <ViewSwitch id="template" {narrow} />
+      {#if message}<span class="flash">{message}</span>{/if}
+      <button class="primary" onclick={persist} disabled={dirtyFiles.length === 0}>{t("common.save")}</button>
+    </div>
+  </header>
+
+<div class="panes">
+<SplitPane id="template" bind:narrow>
   {#snippet left()}
   <section class="code-pane">
-    <header class="topbar">
-      <div class="crumbs">
-        <span class="chip">▦ {template.name}</span>
-        <span class="chip muted" title={t("template.previewHint")}>
-          {t("template.usedBy", { n: template.resumes.length })}
-        </span>
-      </div>
-      <div class="actions">
-        {#if message}<span class="flash">{message}</span>{/if}
-        <button class="primary" onclick={persist} disabled={dirtyFiles.length === 0}>{t("common.save")}</button>
-      </div>
-    </header>
     <nav class="tabs">
       {#each files as f (f)}
         <button class="tab" class:active={f === active} onclick={() => (active = f)}>
@@ -120,8 +134,20 @@
   </section>
   {/snippet}
 </SplitPane>
+</div>
+</div>
 
 <style>
+  .editor {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
+  .panes {
+    flex: 1;
+    min-height: 0;
+  }
   .code-pane {
     height: 100%;
     display: flex;

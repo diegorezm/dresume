@@ -69,7 +69,7 @@
   </header>
 
   <div class="body">
-    <SplitPane id="profile" initial={0.55}>
+    <SplitPane id="profile" initial={0.55} min={260}>
       {#snippet left()}
         <div class="code">
           <CodeEditor name="profile.yaml" value={text} onchange={(v) => (text = v)} />

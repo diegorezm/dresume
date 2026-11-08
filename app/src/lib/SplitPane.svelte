@@ -1,25 +1,44 @@
 <script lang="ts">
-  // Two panes with a draggable divider. The split is remembered per `id` in localStorage.
+  // Two panes with a draggable divider. The split ratio is remembered per `id` in localStorage,
+  // and which panes are visible comes from the shared layout store. When the container is too
+  // narrow for both panes, "split" falls back to a single pane (the parent offers a switch).
   import type { Snippet } from "svelte";
   import { t } from "./i18n.svelte";
+  import { layout } from "./layout.svelte";
 
   interface Props {
-    /** Storage key; panes with the same id share their split. */
+    /** Storage key for the ratio and the layout mode. */
     id: string;
     /** Initial left width, as a fraction of the container. */
     initial?: number;
     /** Minimum width of each pane, in px. */
     min?: number;
+    /** Set to true while the container can't fit both panes. */
+    narrow?: boolean;
     left: Snippet;
     right: Snippet;
   }
 
-  let { id, initial = 0.5, min = 320, left, right }: Props = $props();
+  let { id, initial = 0.5, min = 320, narrow = $bindable(false), left, right }: Props = $props();
 
   const key = $derived(`dresume.split.${id}`);
   let ratio = $state(read());
   let container: HTMLDivElement;
   let dragging = $state(false);
+
+  // Both panes stay mounted (editor state, scroll) and are hidden with CSS.
+  const mode = $derived.by(() => {
+    const m = layout.mode(id);
+    return narrow && m === "split" ? "left" : m;
+  });
+
+  $effect(() => {
+    const ro = new ResizeObserver(([entry]) => {
+      narrow = entry.contentRect.width < min * 2;
+    });
+    ro.observe(container);
+    return () => ro.disconnect();
+  });
 
   function read(): number {
     try {
@@ -70,8 +89,13 @@
   }
 </script>
 
-<div class="split" class:dragging bind:this={container} style:--left="{ratio * 100}%">
-  <div class="pane">{@render left()}</div>
+<div
+  class="split mode-{mode}"
+  class:dragging
+  bind:this={container}
+  style:--left="{ratio * 100}%"
+>
+  <div class="pane left">{@render left()}</div>
   <!-- A focusable separator is an interactive ARIA widget (resizable with arrow keys). -->
   <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
   <div
@@ -91,7 +115,7 @@
     }}
     {onkeydown}
   ></div>
-  <div class="pane">{@render right()}</div>
+  <div class="pane right">{@render right()}</div>
 </div>
 
 <style>
@@ -100,6 +124,16 @@
     grid-template-columns: var(--left) 0 1fr;
     height: 100%;
     min-height: 0;
+  }
+  .split.mode-left,
+  .split.mode-right {
+    grid-template-columns: 1fr;
+  }
+  .mode-left .right,
+  .mode-right .left,
+  .mode-left .divider,
+  .mode-right .divider {
+    display: none;
   }
   .split.dragging {
     cursor: col-resize;

@@ -5,6 +5,8 @@
   import ResumeForm from "./form/ResumeForm.svelte";
   import Preview from "./Preview.svelte";
   import SplitPane from "./SplitPane.svelte";
+  import ViewSwitch from "./ViewSwitch.svelte";
+  import { isShortcut, layout } from "./layout.svelte";
 
   interface Props {
     id: string;
@@ -90,7 +92,15 @@
     setTimeout(() => (message = ""), 3000);
   }
 
+  /** True while the panes are too narrow to sit side by side. */
+  let narrow = $state(false);
+
   function onkeydown(e: KeyboardEvent) {
+    if (isShortcut(e, "\\")) {
+      e.preventDefault();
+      layout.togglePreview("resume");
+      return;
+    }
     if ((e.ctrlKey || e.metaKey) && e.key === "s") {
       e.preventDefault();
       persist();
@@ -100,22 +110,25 @@
 
 <svelte:window {onkeydown} />
 
-<SplitPane id="resume">
+<div class="editor">
+  <header class="topbar">
+    <div class="crumbs">
+      <span class="chip muted">▦ {template}</span>
+      <span class="chip">▤ {id}{dirty ? " •" : ""}</span>
+    </div>
+    <div class="actions">
+      <ViewSwitch id="resume" {narrow} />
+      {#if message}<span class="flash">{message}</span>{/if}
+      <button class="ghost danger" onclick={remove}>{t("common.delete")}</button>
+      <button onclick={exportPdf}>{t("resume.exportPdf")}</button>
+      <button class="primary" onclick={persist} disabled={!dirty}>{t("common.save")}</button>
+    </div>
+  </header>
+
+<div class="panes">
+<SplitPane id="resume" bind:narrow>
   {#snippet left()}
   <section class="form-pane">
-    <header class="topbar">
-      <div class="crumbs">
-        <span class="chip muted">▦ {template}</span>
-        <span class="chip">▤ {id}{dirty ? " •" : ""}</span>
-      </div>
-      <div class="actions">
-        {#if message}<span class="flash">{message}</span>{/if}
-        <button class="ghost danger" onclick={remove}>{t("common.delete")}</button>
-        <button onclick={exportPdf}>{t("resume.exportPdf")}</button>
-        <button class="primary" onclick={persist} disabled={!dirty}>{t("common.save")}</button>
-      </div>
-    </header>
-
     {#if loadError}
       <p class="error">{loadError}</p>
     {/if}
@@ -139,8 +152,20 @@
   </section>
   {/snippet}
 </SplitPane>
+</div>
+</div>
 
 <style>
+  .editor {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
+  .panes {
+    flex: 1;
+    min-height: 0;
+  }
   .form-pane {
     height: 100%;
     display: flex;
@@ -150,6 +175,8 @@
   .form-scroll {
     flex: 1;
     overflow: auto;
+    /* Lets the form switch to one column when this pane is narrow (see Field/ResumeForm). */
+    container-type: inline-size;
     padding: 1.25rem 1.5rem 3rem;
   }
   .schema-errors {
