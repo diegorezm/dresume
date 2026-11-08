@@ -1,0 +1,35 @@
+template: classic
+target_role: Digital Marketing Specialist
+summary: >
+  Marketing professional with experience in social media management, paid
+  campaigns, and content production. Focused on organic growth and qualified
+  lead generation for small and medium-sized businesses.
+
+skills:
+  - Social Media Management
+  - Google Ads and Meta Ads
+  - SEO and Content Marketing
+  - Copywriting
+  - Canva and Adobe Express
+  - Analytics and Performance Metrics
+
+experience:
+  - company: Creative Agency
+    role: Digital Marketing Analyst
+    period: "2021 - Present"
+    items:
+      - Managed social media for 8 clients, achieving an average 45% increase in engagement.
+      - Created and optimized paid traffic campaigns with an average 3.2x ROI.
+      - Produced monthly content calendars aligned with each brand's visual identity.
+
+  - company: Fashion Startup Ltd.
+    role: Communications Assistant
+    period: "2019 - 2021"
+    items:
+      - Supported the marketing team with graphic and written content production.
+      - Contributed to 60% Instagram follower growth over 8 months.
+
+education:
+  - degree: Bachelor of Advertising and Public Relations
+    institution: College of Communications
+    period: "2017 - 2021"

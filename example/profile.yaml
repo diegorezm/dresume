@@ -1,0 +1,15 @@
+
+name: John Doe
+title: Professional
+email: john.doe@example.com
+phone: "+1 (555) 123-4567"
+location: "New York, NY"
+website:
+  label: "johndoe.com"
+  url: "https://johndoe.com"
+github:
+  label: "github.com/johndoe"
+  url: "https://github.com/johndoe"
+linkedin:
+  label: "linkedin.com/in/johndoe"
+  url: "https://linkedin.com/in/johndoe"

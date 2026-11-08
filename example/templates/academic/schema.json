@@ -1,0 +1,298 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "template",
+    "education"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "template": {
+      "type": "string"
+    },
+    "lang": {
+      "type": "string",
+      "title": "Language code",
+      "enum": [
+        "en",
+        "pt",
+        "es",
+        "fr",
+        "de"
+      ]
+    },
+    "position": {
+      "type": "string",
+      "title": "Position"
+    },
+    "summary": {
+      "type": "string",
+      "title": "Summary",
+      "format": "textarea"
+    },
+    "research_interests": {
+      "type": "array",
+      "title": "Research interests",
+      "items": {
+        "type": "string"
+      },
+      "format": "tags"
+    },
+    "education": {
+      "type": "array",
+      "title": "Education",
+      "items": {
+        "type": "object",
+        "required": [
+          "degree",
+          "institution",
+          "period"
+        ],
+        "properties": {
+          "degree": {
+            "type": "string",
+            "title": "Degree"
+          },
+          "institution": {
+            "type": "string",
+            "title": "Institution"
+          },
+          "period": {
+            "type": "string",
+            "title": "Period"
+          },
+          "thesis": {
+            "type": "string",
+            "title": "Thesis"
+          },
+          "advisor": {
+            "type": "string",
+            "title": "Advisor"
+          },
+          "items": {
+            "type": "array",
+            "title": "Details",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "publications": {
+      "type": "array",
+      "title": "Publications",
+      "items": {
+        "type": "object",
+        "required": [
+          "authors",
+          "title",
+          "venue",
+          "year"
+        ],
+        "properties": {
+          "authors": {
+            "type": "array",
+            "title": "Authors",
+            "description": "Your name is bolded when it matches profile.name exactly.",
+            "items": {
+              "type": "string"
+            },
+            "format": "tags"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "venue": {
+            "type": "string",
+            "title": "Venue"
+          },
+          "year": {
+            "type": [
+              "integer",
+              "string"
+            ],
+            "title": "Year"
+          },
+          "link": {
+            "type": "string",
+            "title": "Link",
+            "format": "uri"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          }
+        }
+      }
+    },
+    "experience": {
+      "type": "array",
+      "title": "Experience",
+      "items": {
+        "type": "object",
+        "required": [
+          "role",
+          "organization",
+          "period"
+        ],
+        "properties": {
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "organization": {
+            "type": "string",
+            "title": "Organization"
+          },
+          "period": {
+            "type": "string",
+            "title": "Period"
+          },
+          "items": {
+            "type": "array",
+            "title": "Highlights",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "teaching": {
+      "type": "array",
+      "title": "Teaching",
+      "items": {
+        "type": "object",
+        "required": [
+          "course",
+          "role",
+          "institution",
+          "period"
+        ],
+        "properties": {
+          "course": {
+            "type": "string",
+            "title": "Course"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "institution": {
+            "type": "string",
+            "title": "Institution"
+          },
+          "period": {
+            "type": "string",
+            "title": "Period"
+          }
+        }
+      }
+    },
+    "awards": {
+      "type": "array",
+      "title": "Awards & grants",
+      "items": {
+        "type": "object",
+        "required": [
+          "title",
+          "year"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "issuer": {
+            "type": "string",
+            "title": "Issuer"
+          },
+          "year": {
+            "type": [
+              "integer",
+              "string"
+            ],
+            "title": "Year"
+          }
+        }
+      }
+    },
+    "talks": {
+      "type": "array",
+      "title": "Talks",
+      "items": {
+        "type": "object",
+        "required": [
+          "title",
+          "event",
+          "year"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "event": {
+            "type": "string",
+            "title": "Event"
+          },
+          "year": {
+            "type": [
+              "integer",
+              "string"
+            ],
+            "title": "Year"
+          }
+        }
+      }
+    },
+    "skills": {
+      "type": "array",
+      "title": "Skills",
+      "items": {
+        "type": "object",
+        "required": [
+          "category",
+          "items"
+        ],
+        "properties": {
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "items": {
+            "type": "array",
+            "title": "Items",
+            "items": {
+              "type": "string"
+            },
+            "format": "tags"
+          }
+        }
+      }
+    },
+    "languages": {
+      "type": "array",
+      "title": "Languages",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "level"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Language"
+          },
+          "level": {
+            "type": "string",
+            "title": "Level"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,70 @@
+lang: en
+position: PhD Candidate in Computer Science
+summary: >
+  Researcher working on programming languages and typesetting systems, with a focus on
+  incremental compilation and interactive document tooling.
+
+research_interests:
+  - Incremental compilation
+  - Programming languages
+  - Digital typesetting
+  - Human–computer interaction
+
+education:
+  - degree: PhD in Computer Science
+    institution: University of São Paulo
+    period: 2022 – present
+    thesis: Incremental Layout for Interactive Typesetting
+    advisor: Prof. Maria Silva
+  - degree: BSc in Computer Science
+    institution: State University of Campinas
+    period: 2017 – 2021
+    items:
+      - Graduated with honors (top 5%).
+
+publications:
+  - authors: [John Doe, Maria Silva]
+    title: Memoized Layout for Responsive Document Previews
+    venue: Proceedings of the ACM Symposium on Document Engineering
+    year: 2025
+    link: https://doi.org/10.1145/0000000
+  - authors: [Ana Costa, John Doe, Maria Silva]
+    title: A Type System for Markup Languages
+    venue: Journal of Functional Programming
+    year: 2024
+    note: (Best paper award)
+
+experience:
+  - role: Research Intern
+    organization: Typesetting Lab, ETH Zürich
+    period: Summer 2024
+    items:
+      - Prototyped an incremental line-breaking algorithm, cutting relayout time by 60%.
+
+teaching:
+  - course: Compilers (MAC0444)
+    role: Teaching Assistant
+    institution: University of São Paulo
+    period: 2023 – 2024
+
+awards:
+  - title: CAPES Doctoral Fellowship
+    issuer: CAPES
+    year: 2022
+
+talks:
+  - title: Why your PDF takes so long to compile
+    event: Typst Meetup, Berlin
+    year: 2025
+
+skills:
+  - category: Languages
+    items: [Rust, Haskell, TypeScript, Python]
+  - category: Tools
+    items: [Typst, LaTeX, Git, Nix]
+
+languages:
+  - name: Portuguese
+    level: native
+  - name: English
+    level: fluent

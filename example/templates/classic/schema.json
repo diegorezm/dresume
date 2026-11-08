@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "template",
+    "target_role",
+    "summary",
+    "skills",
+    "experience"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "template": {
+      "type": "string"
+    },
+    "target_role": {
+      "type": "string",
+      "title": "Target role"
+    },
+    "summary": {
+      "type": "string",
+      "title": "Summary",
+      "format": "textarea"
+    },
+    "skills": {
+      "type": "array",
+      "title": "Skills",
+      "items": {
+        "type": "string"
+      },
+      "format": "tags"
+    },
+    "experience": {
+      "type": "array",
+      "title": "Experience",
+      "items": {
+        "type": "object",
+        "required": [
+          "company",
+          "role",
+          "period",
+          "items"
+        ],
+        "properties": {
+          "company": {
+            "type": "string",
+            "title": "Company"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "period": {
+            "type": "string",
+            "title": "Period"
+          },
+          "items": {
+            "type": "array",
+            "title": "Highlights",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "projects": {
+      "type": "array",
+      "title": "Projects",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "items"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "link": {
+            "type": "string",
+            "title": "Link",
+            "format": "uri"
+          },
+          "items": {
+            "type": "array",
+            "title": "Highlights",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "education": {
+      "type": "array",
+      "title": "Education",
+      "items": {
+        "type": "object",
+        "required": [
+          "degree",
+          "institution",
+          "period"
+        ],
+        "properties": {
+          "degree": {
+            "type": "string",
+            "title": "Degree"
+          },
+          "institution": {
+            "type": "string",
+            "title": "Institution"
+          },
+          "period": {
+            "type": "string",
+            "title": "Period"
+          }
+        }
+      }
+    }
+  }
+}

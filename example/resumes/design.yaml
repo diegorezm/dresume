@@ -1,0 +1,41 @@
+template: classic
+target_role: Graphic Designer / UI Designer
+summary: >
+  Designer focused on visual identity, digital interfaces, and user experience.
+  Experience in branding, app design, and printed materials for clients across
+  different industries.
+
+skills:
+  - Figma
+  - Adobe Illustrator and Photoshop
+  - Visual Identity and Branding
+  - UI/UX Design
+  - Typography and Visual Hierarchy
+  - Prototyping and Usability Testing
+
+experience:
+  - company: Visual Studio
+    role: Graphic Designer
+    period: "2022 - Present"
+    items:
+      - Developed complete visual identities for 15 small and medium-sized brands.
+      - Designed mobile app interfaces in Figma, reducing friction in core user flows.
+      - Collaborated with the marketing team on digital campaign materials.
+
+  - company: Freelancer
+    role: Independent Designer
+    period: "2020 - 2022"
+    items:
+      - Served clients across industries with logo design, presentations, and print materials.
+      - Built a reusable template library that reduced delivery time by 25%.
+
+projects:
+  - name: Delivery App Redesign
+    items:
+      - Conducted user research and mapped the main checkout abandonment points.
+      - Proposed a new purchase flow that reduced steps from 7 to 4.
+
+education:
+  - degree: Associate Degree in Graphic Design
+    institution: School of Applied Arts
+    period: "2018 - 2020"

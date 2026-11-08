@@ -1,0 +1,41 @@
+target_role: Project Analyst
+summary: >
+  Results-driven professional with experience in project management, client
+  relationships, and process improvement. Adaptable to different contexts
+  and collaborative across teams.
+
+skills:
+  - Project Management
+  - Communication
+  - Excel and Google Sheets
+  - Microsoft Office Suite
+  - Agile Methodologies (Scrum, Kanban)
+  - Customer Service
+
+experience:
+  - company: ABC Company
+    role: Project Analyst
+    period: "2022 - Present"
+    items:
+      - Managed a portfolio of 12 simultaneous projects with on-time delivery in 90% of cases.
+      - Led alignment meetings with internal and external stakeholders.
+      - Reduced rework by 30% by implementing standardized delivery checklists.
+
+  - company: XYZ Consulting
+    role: Administrative Assistant
+    period: "2020 - 2022"
+    items:
+      - Assisted the management team with monthly report preparation.
+      - Reorganized the company's document archive, reducing search time by 40%.
+      - Participated in internal agile methodology training sessions.
+
+projects:
+  - name: Deadline Tracking System
+    items:
+      - Built an automated spreadsheet for tracking project deadlines and statuses.
+      - Tool was adopted company-wide by the entire project team.
+
+education:
+  - degree: Bachelor of Business Administration
+    institution: Paulista University
+    period: "2018 - 2022"
