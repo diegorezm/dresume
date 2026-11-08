@@ -8,8 +8,11 @@
 //! ```text
 //! claude   claude -p --input-format stream-json --output-format stream-json
 //! codex    codex app-server                 (JSON-RPC)
+//! gemini   gemini --acp                     (Agent Client Protocol)
+//! opencode opencode acp                     (Agent Client Protocol)
 //! ```
 
+mod acp;
 mod claude;
 mod codex;
 mod process;
@@ -28,15 +31,19 @@ use tokio::sync::mpsc;
 pub enum AgentKind {
     Claude,
     Codex,
+    Gemini,
+    OpenCode,
 }
 
 impl AgentKind {
-    pub const ALL: &[AgentKind] = &[AgentKind::Claude, AgentKind::Codex];
+    pub const ALL: &[AgentKind] = &[AgentKind::Claude, AgentKind::Codex, AgentKind::Gemini, AgentKind::OpenCode];
 
     pub fn name(self) -> &'static str {
         match self {
             AgentKind::Claude => "Claude Code",
             AgentKind::Codex => "Codex",
+            AgentKind::Gemini => "Gemini CLI",
+            AgentKind::OpenCode => "OpenCode",
         }
     }
 
@@ -45,6 +52,8 @@ impl AgentKind {
         match self {
             AgentKind::Claude => "claude",
             AgentKind::Codex => "codex",
+            AgentKind::Gemini => "gemini",
+            AgentKind::OpenCode => "opencode",
         }
     }
 }
@@ -132,16 +141,11 @@ pub(crate) enum Input {
 
 /// A running agent. Dropping it (or calling [`Session::close`]) stops the process.
 pub struct Session {
-    kind: AgentKind,
     tx: mpsc::UnboundedSender<Input>,
     task: tokio::task::JoinHandle<()>,
 }
 
 impl Session {
-    pub fn kind(&self) -> AgentKind {
-        self.kind
-    }
-
     /// Sends a user message. Messages sent while a turn runs are queued by the agent.
     pub fn send(&self, text: impl Into<String>) {
         let _ = self.tx.send(Input::Prompt(text.into()));
@@ -168,20 +172,41 @@ impl Drop for Session {
 
 /// Starts an agent. Must be called inside a Tokio runtime. Startup failures arrive as
 /// [`AgentEvent::Error`] followed by [`AgentEvent::Exited`].
-pub fn start(kind: AgentKind, mut opts: SessionOptions, sink: EventSink) -> Session {
+pub fn start(kind: AgentKind, opts: SessionOptions, sink: EventSink) -> Session {
+    launch(Launch::Known(kind), opts, sink)
+}
+
+/// Starts any agent that speaks the Agent Client Protocol, e.g. `npx @zed-industries/claude-code-acp`.
+pub fn start_acp(program: impl Into<String>, args: Vec<String>, opts: SessionOptions, sink: EventSink) -> Session {
+    launch(Launch::Acp { program: program.into(), args }, opts, sink)
+}
+
+enum Launch {
+    Known(AgentKind),
+    Acp { program: String, args: Vec<String> },
+}
+
+fn launch(how: Launch, mut opts: SessionOptions, sink: EventSink) -> Session {
     opts.cwd = plain_path(&opts.cwd);
     let (tx, rx) = mpsc::unbounded_channel();
     let task = tokio::spawn(async move {
-        let result = match kind {
-            AgentKind::Claude => claude::run(opts, sink.clone(), rx).await,
-            AgentKind::Codex => codex::run(opts, sink.clone(), rx).await,
+        let s = sink.clone();
+        let result = match how {
+            Launch::Known(AgentKind::Claude) => claude::run(opts, s, rx).await,
+            Launch::Known(AgentKind::Codex) => codex::run(opts, s, rx).await,
+            Launch::Known(AgentKind::Gemini) => acp::run("gemini", &["--acp"], opts, s, rx).await,
+            Launch::Known(AgentKind::OpenCode) => acp::run("opencode", &["acp"], opts, s, rx).await,
+            Launch::Acp { program, args } => {
+                let args: Vec<&str> = args.iter().map(String::as_str).collect();
+                acp::run(&program, &args, opts, s, rx).await
+            }
         };
         if let Err(e) = result {
             sink(AgentEvent::Error { message: format!("{e:#}") });
         }
         sink(AgentEvent::Exited);
     });
-    Session { kind, tx, task }
+    Session { tx, task }
 }
 
 /// Short label for a tool call: the tool plus its most telling argument.

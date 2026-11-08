@@ -49,7 +49,7 @@ export interface Preview {
 }
 
 /** AI agents installed on this machine (Claude Code, Codex, …). */
-export type AgentKind = "claude" | "codex";
+export type AgentKind = "claude" | "codex" | "gemini" | "opencode";
 export type PermissionMode = "ask" | "autoEdit" | "readOnly";
 
 export interface AgentInfo {

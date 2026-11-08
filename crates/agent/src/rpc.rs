@@ -22,12 +22,23 @@ pub fn parse(line: &str) -> Option<Message> {
         (None, Some(method)) => Some(Message::Notification { method, params }),
         (Some(id), None) => {
             let result = match msg.get("error") {
-                Some(e) => Err(e.get("message").and_then(Value::as_str).unwrap_or("request failed").into()),
+                Some(e) => Err(error_text(e)),
                 None => Ok(msg.get("result").cloned().unwrap_or(Value::Null)),
             };
             Some(Message::Response { id: id.as_u64()?, result })
         }
         (None, None) => None,
+    }
+}
+
+/// The error message plus any details the agent attached (`data.details`, `data.message`).
+fn error_text(e: &Value) -> String {
+    let message = e.get("message").and_then(Value::as_str).unwrap_or("request failed");
+    let data = &e["data"];
+    let details = data.as_str().or(data["details"].as_str()).or(data["message"].as_str());
+    match details {
+        Some(d) if d != message => format!("{message}: {d}"),
+        _ => message.to_string(),
     }
 }
 
@@ -83,6 +94,8 @@ mod tests {
     fn classifies_messages() {
         assert!(matches!(parse(r#"{"id":3,"result":{"ok":true}}"#), Some(Message::Response { id: 3, result: Ok(_) })));
         assert!(matches!(parse(r#"{"id":3,"error":{"message":"no"}}"#), Some(Message::Response { result: Err(e), .. }) if e == "no"));
+        let detailed = r#"{"id":3,"error":{"message":"Internal error","data":{"details":"boom"}}}"#;
+        assert!(matches!(parse(detailed), Some(Message::Response { result: Err(e), .. }) if e == "Internal error: boom"));
         assert!(matches!(parse(r#"{"id":0,"method":"x","params":{}}"#), Some(Message::Request { .. })));
         assert!(matches!(parse(r#"{"method":"x"}"#), Some(Message::Notification { .. })));
         assert!(parse("not json").is_none());

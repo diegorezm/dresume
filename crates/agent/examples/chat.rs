@@ -1,4 +1,5 @@
 //! Manual check against a real agent: `cargo run -p dresume-agent --example chat -- claude <dir> "<prompt>"`.
+//! `acp:<program> [args…]` (one argument, space separated) runs any ACP agent instead.
 //! Approves every permission request and exits when the first turn ends.
 
 use std::sync::Arc;
@@ -16,7 +17,6 @@ async fn main() {
     for info in dresume_agent::detect().await {
         eprintln!("{:?}: {:?} {:?}", info.kind, info.path, info.version);
     }
-    let kind: AgentKind = serde_json::from_value(serde_json::json!(kind)).expect("unknown agent");
     let (tx, mut rx) = mpsc::unbounded_channel();
     let opts = SessionOptions {
         cwd: std::fs::canonicalize(dir).unwrap(),
@@ -24,7 +24,19 @@ async fn main() {
         mode: PermissionMode::Ask,
         model: None,
     };
-    let session = dresume_agent::start(kind, opts, Arc::new(move |e| { let _ = tx.send(e); }));
+    let sink: dresume_agent::EventSink = Arc::new(move |e| {
+        let _ = tx.send(e);
+    });
+    let session = match kind.strip_prefix("acp:") {
+        Some(command) => {
+            let mut parts = command.split(' ').map(String::from);
+            dresume_agent::start_acp(parts.next().unwrap(), parts.collect(), opts, sink)
+        }
+        None => {
+            let kind: AgentKind = serde_json::from_value(serde_json::json!(kind)).expect("unknown agent");
+            dresume_agent::start(kind, opts, sink)
+        }
+    };
     session.send(prompt.clone());
     while let Some(event) = rx.recv().await {
         println!("{}", serde_json::to_string(&event).unwrap());
