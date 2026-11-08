@@ -47,7 +47,9 @@ app/                          desktop app
   src/lib/CodeEditor.svelte   CodeMirror 6 wrapper, themed through CSS variables
   src/lib/typstHighlight.ts   CodeMirror extension calling the highlight_typst command
   src/lib/Preview.svelte      SVG pages, zoom, diagnostics list
-  src/lib/SplitPane.svelte    resizable two-pane layout (ratio saved in localStorage per id)
+  src/lib/SplitPane.svelte    resizable two-pane layout; ratio in localStorage, falls back to one pane when narrow
+  src/lib/ViewSwitch.svelte   editor / split / preview switch for a SplitPane
+  src/lib/layout.svelte.ts    layout prefs (sidebar visible, pane mode per editor) + isShortcut()
   src/lib/form/               schema-driven content form (ResumeForm > Field > ItemList/BulletList/TagInput)
   src/lib/Modal.svelte        shared dialog shell + .m-* classes for dialog bodies
   src/lib/New*Dialog.svelte   create template / create resume dialogs
@@ -100,6 +102,9 @@ docs/images/                  README images (rendered with the typst CLI)
   Don't name loop variables `t` in components: it shadows the translator (use `tpl`, `th`, `x`).
 - Buttons: default pill; `.primary` for the main action, `.ghost` for icon-like actions, `.danger` for
   destructive ones. Reuse `.card`, `.topbar`, `.chip`, `.page-head`, `.bubble` from `app.css`.
+- Layout must adapt: editors put the topbar outside `SplitPane` (it must survive "preview only"), forms
+  use container queries (`.form-scroll` is an inline-size container) instead of viewport media queries.
+  Shortcuts: Ctrl+S save, Ctrl+\ toggle preview, Ctrl+B toggle sidebar; use `isShortcut()`.
 - Dialogs use `Modal.svelte` and its `.m-*` classes. Respect `prefers-reduced-motion` in animations.
 
 ### Template schema conventions (drive the form UI)
