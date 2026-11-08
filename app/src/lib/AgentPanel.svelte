@@ -366,18 +366,33 @@
             {model?.name ?? t("agent.defaultModel")}{#if effort}<span class="effort">{effortName(effort)}</span>{/if} ▾
           </button>
           {#if menu === "model"}
-            <div class="menu right" role="menu">
-              <span class="menu-label">{t("agent.model")}</span>
-              <button type="button" class:active={!model} onclick={() => setModel(null)}>{t("agent.defaultModel")}</button>
-              {#each models as m (m.id)}
-                <button type="button" class:active={model?.id === m.id} onclick={() => setModel(m.id)}>{m.name}</button>
-              {/each}
+            <div class="picker" role="menu">
+              <div class="col">
+                <span class="menu-label">{t("agent.model")}</span>
+                <button type="button" class="opt" onclick={() => setModel(null)}>
+                  <span class="spark">✦</span>{t("agent.defaultModel")}{#if !model}<span class="check">✓</span>{/if}
+                </button>
+                {#each models as m (m.id)}
+                  <button type="button" class="opt" onclick={() => setModel(m.id)}>
+                    <span class="spark">✦</span>{m.name}{#if model?.id === m.id}<span class="check">✓</span>{/if}
+                  </button>
+                {/each}
+              </div>
               {#if efforts.length}
-                <span class="menu-label">{t("agent.effort")}</span>
-                <div class="efforts">
-                  <button type="button" class:active={!effort} onclick={() => setEffort(null)}>{t("agent.effortAuto")}</button>
+                <div class="col side">
+                  <span class="menu-label">{t("agent.effort")}</span>
+                  {#if !(model ?? models[0])?.default_effort}
+                    <button type="button" class="opt" onclick={() => setEffort(null)}>
+                      {t("agent.effortAuto")}{#if !effort}<span class="check">✓</span>{/if}
+                    </button>
+                  {/if}
                   {#each efforts as e (e)}
-                    <button type="button" class:active={effort === e} onclick={() => setEffort(e)}>{effortName(e)}</button>
+                    {@const isDefault = (model ?? models[0])?.default_effort === e}
+                    <button type="button" class="opt" onclick={() => setEffort(isDefault ? null : e)}>
+                      {effortName(e)}
+                      {#if isDefault}<small>{t("agent.effortDefault")}</small>{/if}
+                      {#if effort === e || (!effort && isDefault)}<span class="check">✓</span>{/if}
+                    </button>
                   {/each}
                 </div>
               {/if}
@@ -712,22 +727,53 @@
     letter-spacing: 0.04em;
     color: var(--muted);
   }
-  .efforts {
+  .picker {
+    position: absolute;
+    bottom: calc(100% + 0.35rem);
+    right: 0;
+    z-index: 20;
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.2rem;
-    padding: 0.1rem 0.4rem 0.3rem;
-  }
-  .efforts button {
+    width: max-content;
+    max-width: min(26rem, calc(100vw - 2rem));
+    background: var(--surface);
     border: 1px solid var(--border);
-    background: transparent;
-    border-radius: 999px;
-    padding: 0.15rem 0.55rem;
-    font-size: 0.75rem;
-    color: var(--muted);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
   }
-  .efforts button.active {
-    border-color: var(--accent);
-    color: var(--accent);
+  .col {
+    display: flex;
+    flex-direction: column;
+    min-width: 11rem;
+    padding: 0.35rem;
+    max-height: 50vh;
+    overflow: auto;
+  }
+  .col.side {
+    min-width: 9rem;
+    border-left: 1px solid var(--border);
+  }
+  .opt {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-sm);
+    padding: 0.45rem 0.6rem;
+    text-align: left;
+    font-size: 0.85rem;
+    color: var(--text);
+    white-space: nowrap;
+  }
+  .opt:hover {
+    background: var(--surface-2);
+  }
+  .opt small {
+    color: var(--muted);
+    font-size: 0.75rem;
+  }
+  .check {
+    margin-left: auto;
+    padding-left: 0.75rem;
   }
 </style>
