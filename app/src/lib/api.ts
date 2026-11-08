@@ -61,6 +61,9 @@ export interface AgentInfo {
 
 export type ToolStatus = "running" | "done" | "failed";
 
+/** What the user has open while talking to the agent. */
+export type AgentTarget = { kind: "resume" | "template"; id: string };
+
 /** A model an agent can run, with the reasoning efforts it accepts. */
 export interface ModelOption {
   id: string;
@@ -123,12 +126,12 @@ export const api = {
     mode: PermissionMode,
     model: string | null,
     effort: string | null,
-    resume: string | null,
+    target: AgentTarget,
     onEvent: (e: AgentEvent) => void,
   ) => {
     const channel = new Channel<AgentEvent>();
     channel.onmessage = onEvent;
-    return invoke<number>("agent_start", { kind, mode, model, effort, resume, onEvent: channel });
+    return invoke<number>("agent_start", { kind, mode, model, effort, target, onEvent: channel });
   },
   agentSend: (id: number, text: string) => invoke<void>("agent_send", { id, text }),
   agentRespond: (id: number, request: string, allow: boolean) =>

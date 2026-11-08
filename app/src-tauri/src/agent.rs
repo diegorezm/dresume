@@ -57,15 +57,15 @@ pub async fn agent_start(
     mode: PermissionMode,
     model: Option<String>,
     effort: Option<String>,
-    resume: Option<String>,
+    target: Target,
     on_event: Channel<AgentEvent>,
 ) -> CmdResult<u32> {
-    let (cwd, template) = with_ws(&state, |ws| {
-        let template = match &resume {
-            Some(id) => Some(ws.resume_info(id)?.template),
-            None => None,
+    let (cwd, open) = with_ws(&state, |ws| {
+        let open = match &target {
+            Target::Resume(id) => Open::Resume { id: id.clone(), template: ws.resume_info(id)?.template },
+            Target::Template(id) => Open::Template(id.clone()),
         };
-        Ok((ws.root().to_path_buf(), template))
+        Ok((ws.root().to_path_buf(), open))
     })?;
     // With the dresume CLI installed, the agent also gets its MCP tools (validate, build, …).
     let mcp = dresume_agent::find_program("dresume").map(|command| McpServer {
@@ -73,7 +73,7 @@ pub async fn agent_start(
         command,
         args: vec!["-w".into(), cwd.to_string_lossy().into_owned(), "mcp".into()],
     });
-    let instructions = instructions(resume.as_deref(), template.as_deref(), mcp.is_some());
+    let instructions = instructions(&open, mcp.is_some());
     let opts = SessionOptions { cwd: cwd.clone(), instructions, mode, model, effort, mcp };
     let session = dresume_agent::start(kind, opts, Arc::new(move |e| {
         let _ = on_event.send(e);
@@ -137,23 +137,50 @@ pub fn agent_stop(agents: State<AgentState>, id: u32) {
 
 /// Kept short on purpose: it rides along with every request. It gives the agent the paths it
 /// needs up front so it doesn't spend turns exploring, and points to AGENTS.md only when needed.
-fn instructions(resume: Option<&str>, template: Option<&str>, mcp: bool) -> String {
-    let mut text = String::from(
-        "dresume workspace (Typst resumes). Content: resumes/<id>.yaml, valid per          templates/<template>/schema.json. Contacts: profile.yaml. Edit files directly; the app          previews live. Details in AGENTS.md, read only if needed. Never invent facts. Reply briefly.
-",
-    );
-    if let (Some(id), Some(template)) = (resume, template) {
-        text.push_str(&format!("Open: resumes/{id}.yaml (template {template}).
-"));
+fn instructions(open: &Open, mcp: bool) -> String {
+    let mut text = String::from(concat!(
+        "dresume workspace (Typst resumes). Content: resumes/<id>.yaml, valid per ",
+        "templates/<template>/schema.json. Contacts: profile.yaml. ",
+        "Template = templates/<id>/{template.yaml (name), template.typ, schema.json, sample.yaml}; ",
+        "template.typ reads yaml(sys.inputs.resume) and yaml(sys.inputs.profile). ",
+        "Edit files directly; the app previews live. Details in AGENTS.md, read only if needed. ",
+        "Never invent facts. Reply briefly.\n",
+    ));
+    match open {
+        Open::Resume { id, template } => {
+            text.push_str(&format!("Open: resumes/{id}.yaml (template {template}).\n"));
+        }
+        Open::Template(id) => text.push_str(&format!(
+            "Open: templates/{id}/. Keep schema.json and sample.yaml in sync with fields the layout uses; \
+             changes restyle every resume linked to it.\n"
+        )),
     }
+    let check = match (open, mcp) {
+        (Open::Template(_), true) => "Check with the dresume MCP tool `preview_template`.\n",
+        (Open::Template(_), false) => "Check with `dresume preview-template <id>` if available.\n",
+        (Open::Resume { .. }, true) => "Check with the dresume MCP tool `validate`.\n",
+        (Open::Resume { .. }, false) => "Check with `dresume validate` if available.\n",
+    };
+    text.push_str(check);
     text.push_str(if mcp {
-        "Check edits with the dresume MCP tool `validate`.
-"
+        "New template: MCP tool `new_template` (copies an existing one), then edit it.\n"
     } else {
-        "Check edits with `dresume validate` if available.
-"
+        "New template: copy a templates/<id>/ folder, then edit it.\n"
     });
     text
+}
+
+/// What the user has open in the app when talking to the agent.
+#[derive(serde::Deserialize)]
+#[serde(tag = "kind", content = "id", rename_all = "lowercase")]
+pub enum Target {
+    Resume(String),
+    Template(String),
+}
+
+enum Open {
+    Resume { id: String, template: String },
+    Template(String),
 }
 
 /// Chat transcripts are keyed by workspace root and resume.

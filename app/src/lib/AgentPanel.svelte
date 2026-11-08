@@ -8,6 +8,7 @@
     type AgentEvent,
     type AgentInfo,
     type AgentKind,
+    type AgentTarget,
     type FileChange,
     type ModelOption,
     type PermissionMode,
@@ -16,13 +17,15 @@
   import type { Key } from "./i18n.svelte";
 
   interface Props {
-    /** Resume the user has open; the agent is told about it and the chat is kept per resume. */
-    resume: string;
+    /** Resume or template the user has open; the agent is told about it and the chat is kept per target. */
+    target: AgentTarget;
     /** Called when a turn ends, so the editor can pick up changed files. */
     onturnend?: () => void;
   }
 
-  let { resume, onturnend }: Props = $props();
+  let { target, onturnend }: Props = $props();
+  /** Chat history key; resumes keep the bare id used before templates had a panel. */
+  const chatKey = $derived(target.kind === "resume" ? target.id : `template:${target.id}`);
 
   type Msg =
     | { kind: "user" | "assistant" | "error"; text: string }
@@ -99,7 +102,7 @@
   });
 
   $effect(() => {
-    const key = resume;
+    const key = chatKey;
     untrack(() => {
       stop();
       messages = [];
@@ -107,7 +110,7 @@
     api.loadChat<Msg>(key).then((saved) => {
       // Undo needs the session that made the changes, which is gone after a reload.
       for (const m of saved) if (m.kind === "changes" && m.state === "pending") m.state = "expired";
-      if (key === resume) messages = saved;
+      if (key === chatKey) messages = saved;
       scrollDown();
     }).catch(() => {});
   });
@@ -125,7 +128,7 @@
   function persist() {
     // Unanswered requests die with the session, so they're dropped from the history.
     const kept = messages.filter((m) => m.kind !== "permission" || m.answer !== null);
-    api.saveChat(resume, $state.snapshot(kept)).catch(() => {});
+    api.saveChat(chatKey, $state.snapshot(kept)).catch(() => {});
   }
 
   async function scrollDown() {
@@ -225,7 +228,7 @@
         status = "starting";
         const mine = ++generation;
         const mode = appearance.settings.agentMode;
-        const id = await api.agentStart(kind, mode, model?.id ?? null, effort, resume, (e) => mine === generation && onEvent(e));
+        const id = await api.agentStart(kind, mode, model?.id ?? null, effort, $state.snapshot(target), (e) => mine === generation && onEvent(e));
         if (mine !== generation) return void api.agentStop(id);
         session = id;
       }

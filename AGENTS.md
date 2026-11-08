@@ -42,7 +42,7 @@ crates/
     src/snapshot.rs           workspace snapshot → diffs of what the agent changed + undo
     examples/chat.rs          manual run against a real agent (`--example chat -- claude <dir> "<prompt>"`)
   cli/src/main.rs             `dresume` binary (clap). Every command supports --json
-  cli/src/mcp.rs              `dresume mcp`: MCP stdio server (list, schema, show, validate, build, preview_template)
+  cli/src/mcp.rs              `dresume mcp`: MCP stdio server (list, schema, show, validate, build, new_template, preview_template)
 app/                          desktop app
   src-tauri/src/lib.rs        Tauri commands: thin wrappers over dresume-core + settings/themes I/O
   src-tauri/src/agent.rs      agent commands (start/send/respond/cancel/changes/keep/undo) + chat history
@@ -56,7 +56,8 @@ app/                          desktop app
   src/lib/theme.svelte.ts     themes (built-ins), settings model, applies CSS variables
   src/lib/i18n.svelte.ts      UI translations (en = source of truth, pt) and t()
   src/lib/ResumeEditor.svelte content editor + live preview + PDF export + agent panel (Ctrl+J)
-  src/lib/AgentPanel.svelte   chat with the local agent: tool calls, approvals, diff + keep/undo
+  src/lib/AgentPanel.svelte   chat with the local agent (resume or template): tool calls, approvals, diff + keep/undo
+  src/lib/AgentPane.svelte    resizable side pane hosting AgentPanel (resume and template editors, Ctrl+J)
   src/lib/TemplateEditor.svelte template code editor (tabs per file) + preview against sample.yaml
   src/lib/ProfileEditor.svelte profile.yaml editor + "show in templates" visibility table
   src/lib/CodeEditor.svelte   CodeMirror 6 wrapper, themed through CSS variables

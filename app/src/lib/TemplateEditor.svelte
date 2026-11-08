@@ -5,6 +5,8 @@
   import Preview from "./Preview.svelte";
   import SplitPane from "./SplitPane.svelte";
   import ViewSwitch from "./ViewSwitch.svelte";
+  import AgentPane from "./AgentPane.svelte";
+  import { onDestroy } from "svelte";
   import { isShortcut, layout } from "./layout.svelte";
 
   interface Props {
@@ -38,19 +40,34 @@
     }
   }, 300);
 
-  $effect(() => {
+  /** Reads the template's files. With `keepEdits`, files with unsaved edits keep them. */
+  async function load(keepEdits = false) {
     const id = template.id;
-    (async () => {
-      const names = await api.templateFiles(id);
-      const texts = await Promise.all(names.map((n) => api.readTemplateFile(id, n)));
-      if (id !== template.id) return;
-      files = names;
-      contents = Object.fromEntries(names.map((n, i) => [n, texts[i]]));
-      saved = { ...contents };
-      active = names[0] ?? "template.typ";
-      render();
-    })();
+    const names = await api.templateFiles(id);
+    const texts = await Promise.all(names.map((n) => api.readTemplateFile(id, n)));
+    if (id !== template.id) return;
+    const next = Object.fromEntries(names.map((n, i) => [n, texts[i]]));
+    const edited = keepEdits ? dirtyFiles.filter((f) => names.includes(f)) : [];
+    files = names;
+    contents = { ...next, ...Object.fromEntries(edited.map((f) => [f, contents[f]])) };
+    saved = next;
+    if (!names.includes(active)) active = names[0] ?? "template.typ";
+    render();
+  }
+
+  $effect(() => {
+    void template.id;
+    active = "template.typ";
+    load();
   });
+
+  // Edits from outside the app (the agent, an editor, git) show up live.
+  const unlisten = api.onWorkspaceChanged((paths) => {
+    const prefix = `templates/${template.id}/`;
+    if (paths.some((p) => p.startsWith(prefix))) load(true);
+    else if (paths.includes("profile.yaml")) render();
+  });
+  onDestroy(() => unlisten.then((f) => f()));
 
   function edit(text: string) {
     contents[active] = text;
@@ -80,6 +97,11 @@
   let narrow = $state(false);
 
   function onkeydown(e: KeyboardEvent) {
+    if (isShortcut(e, "j")) {
+      e.preventDefault();
+      layout.toggleAgent();
+      return;
+    }
     if (isShortcut(e, "\\")) {
       e.preventDefault();
       layout.togglePreview("template");
@@ -105,10 +127,12 @@
     <div class="actions">
       <ViewSwitch id="template" {narrow} />
       {#if message}<span class="flash">{message}</span>{/if}
+      <button class:active={layout.agent} onclick={() => layout.toggleAgent()} title={t("agent.toggle")}>✦ {t("agent.title")}</button>
       <button class="primary" onclick={persist} disabled={dirtyFiles.length === 0}>{t("common.save")}</button>
     </div>
   </header>
 
+<div class="body">
 <div class="panes">
 <SplitPane id="template" bind:narrow>
   {#snippet left()}
@@ -135,6 +159,10 @@
   {/snippet}
 </SplitPane>
 </div>
+{#if layout.agent}
+  <AgentPane target={{ kind: "template", id: template.id }} />
+{/if}
+</div>
 </div>
 
 <style>
@@ -144,9 +172,19 @@
     height: 100%;
     min-height: 0;
   }
-  .panes {
+  .body {
     flex: 1;
     min-height: 0;
+    display: flex;
+  }
+  .panes {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+  }
+  button.active {
+    border-color: var(--accent);
+    color: var(--accent);
   }
   .code-pane {
     height: 100%;

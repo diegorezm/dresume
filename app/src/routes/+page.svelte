@@ -58,6 +58,14 @@
     ws = await api.summary();
   }
 
+  // Templates or resumes created, renamed or deleted outside the app (e.g. by the agent)
+  // show up in the sidebar. Only these files change the summary.
+  api.onWorkspaceChanged((paths) => {
+    if (ws && paths.some((p) => /^templates\/[^/]+\/template\.yaml$|^resumes\/[^/]+\.yaml$/.test(p))) {
+      refresh().catch(() => {});
+    }
+  });
+
   function onkeydown(e: KeyboardEvent) {
     if (ws && isShortcut(e, "b")) {
       e.preventDefault();
