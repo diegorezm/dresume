@@ -2,6 +2,7 @@
   import { t } from "./i18n.svelte";
   import { getCurrentWindow } from "@tauri-apps/api/window";
   import { appearance } from "./theme.svelte";
+  import Logo from "./Logo.svelte";
 
   const win = getCurrentWindow();
   let maximized = $state(false);
@@ -22,7 +23,7 @@
 
 <header class="titlebar" data-tauri-drag-region>
   <div class="brand" data-tauri-drag-region>
-    <span class="logo">d</span>
+    <span class="logo"><Logo size={18} /></span>
     <span data-tauri-drag-region>dresume</span>
   </div>
   <div class="controls">
@@ -64,15 +65,7 @@
     color: var(--muted);
   }
   .logo {
-    width: 18px;
-    height: 18px;
-    border-radius: 5px;
     display: grid;
-    place-items: center;
-    background: var(--accent);
-    color: var(--accent-text);
-    font-size: 0.75rem;
-    font-weight: 800;
     pointer-events: none;
   }
   .controls {
