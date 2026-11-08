@@ -406,3 +406,24 @@ kbd { background: var(--surface); border: 1px solid var(--border); border-bottom
 .pocket-front span { color: color-mix(in srgb, #fff 88%, var(--olive)); }
 @media (max-width: 900px) { .polas { min-height: 420px; } }
 @media (max-width: 640px) { .polas { min-height: 330px; } .pola { width: 46%; } }
+
+/* softer theme cards: flat, no tilt, one row */
+.themes { grid-template-columns: repeat(6, 1fr); gap: 10px; }
+.theme-card,
+.theme-card:nth-child(odd),
+.theme-card:nth-child(even) {
+  transform: none;
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  box-shadow: none;
+  border-radius: 16px;
+  padding: 8px 8px 10px;
+}
+.theme-card:hover { transform: translateY(-2px); background: var(--surface); box-shadow: var(--shadow); }
+.theme-card.on { border-color: transparent; background: var(--accent-soft); box-shadow: none; }
+.theme-card b { font-size: 1rem; padding: 0 4px; }
+.theme-card small { padding: 0 4px; }
+.swatch { height: 46px; border-radius: 10px; padding: 7px; gap: 5px; box-shadow: none; }
+.swatch i { border-radius: 4px; }
+@media (max-width: 900px) { .themes { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 480px) { .themes { grid-template-columns: repeat(2, 1fr); } }
