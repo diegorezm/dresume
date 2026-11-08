@@ -1,0 +1,293 @@
+// UI translations. English is the source of truth; every other locale must have the same keys.
+type Params = Record<string, string | number>;
+type Entry = string | ((p: Params) => string);
+
+const plural = (n: number | string, one: string, many: string) => (Number(n) === 1 ? one : many);
+
+const en = {
+  // Welcome
+  "welcome.tagline": "Write the content once. Restyle every resume by changing one template.",
+  "welcome.open": "Open workspace",
+  "welcome.new": "New workspace",
+  "welcome.pickNew": "Folder for the new workspace",
+  "welcome.featureTemplates": "Templates in Typst",
+  "welcome.featureContent": "Content in YAML",
+  "welcome.featureAgents": "Built for AI agents",
+  "welcome.footer": "A workspace is just a folder. Use git, your editor or an agent alongside the app.",
+
+  // Sidebar
+  "nav.overview": "Overview",
+  "nav.profile": "Profile",
+  "nav.templates": "Templates",
+  "nav.settings": "Settings",
+  "nav.switch": "Switch workspace",
+  "nav.newTemplate": "New template",
+  "nav.editLayout": "Edit template layout",
+  "nav.newResumeWith": "New resume with this template",
+
+  // Home
+  "home.subtitle": "Edit the content of a resume, or a template to restyle every resume that uses it.",
+  "home.templates": (p) => `${p.n} ${plural(p.n, "template", "templates")}`,
+  "home.resumes": (p) => `${p.n} ${plural(p.n, "resume", "resumes")}`,
+  "home.editLayout": "Edit layout",
+  "home.noResumes": "No resumes yet",
+  "home.newResume": "＋ New resume",
+  "home.newTemplate": "＋ New template",
+
+  // Common
+  "common.save": "Save",
+  "common.cancel": "Cancel",
+  "common.close": "Close",
+  "common.delete": "Delete",
+  "common.creating": "Creating…",
+  "common.saved": "Saved",
+
+  // Resume editor
+  "resume.exportPdf": "Export PDF",
+  "resume.confirmDelete": (p) => `Delete resume "${p.id}"? This removes resumes/${p.id}.yaml.`,
+  "resume.exportFailed": "Export failed — see errors",
+  "resume.exported": (p) => `Exported to ${p.path}`,
+
+  // Template editor
+  "template.usedBy": (p) => `used by ${p.n} ${plural(p.n, "resume", "resumes")}`,
+  "template.previewHint": "The preview uses sample.yaml",
+  "template.saved": (p) => `Saved — ${p.n} linked ${plural(p.n, "resume", "resumes")} updated`,
+
+  // Profile
+  "profile.title": "Profile",
+  "profile.shared": "shared by every resume",
+  "profile.saved": "Saved — applies to every resume",
+
+  // Preview
+  "preview.compiling": "Compiling…",
+  "preview.errors": (p) => `${p.n} ${plural(p.n, "error", "errors")}`,
+  "preview.upToDate": "Up to date",
+  "preview.warnings": (p) => `${p.n} ${plural(p.n, "warning", "warnings")}`,
+  "preview.error": "error",
+  "preview.warning": "warning",
+  "preview.hint": "hint",
+
+  // Settings
+  "settings.title": "Settings",
+  "settings.subtitle": "Language, themes, colors and type. Saved per user, not per workspace.",
+  "settings.language": "Language",
+  "settings.theme": "Theme",
+  "settings.openThemes": "Open themes folder",
+  "settings.dark": "Dark",
+  "settings.light": "Light",
+  "settings.themesHint":
+    "Custom themes are JSON files in the themes folder, with the same shape as the built-in ones (id, name, dark, colors). Reopen settings to load new files.",
+  "settings.accent": "Accent color",
+  "settings.resetAccent": "Reset to theme",
+  "settings.saveAsPlaceholder": "Save as a new theme…",
+  "settings.saveTheme": "Save theme",
+  "settings.font": "Font",
+  "settings.fontSystem": "System",
+  "settings.fontSerif": "Serif",
+  "settings.corners": "Corners",
+  "settings.sharp": "Sharp",
+  "settings.soft": "Soft",
+  "settings.round": "Round",
+  "settings.size": (p) => `Interface size · ${p.n}%`,
+
+  // Window
+  "window.minimize": "Minimize",
+  "window.maximize": "Maximize",
+  "window.restore": "Restore",
+
+  // New template dialog
+  "newTemplate.title": "New template",
+  "newTemplate.subtitle": "A template is the layout. Every resume linked to it follows its changes.",
+  "newTemplate.submit": "Create template",
+  "newTemplate.name": "Name",
+  "newTemplate.namePlaceholder": "Modern, Academic, Two columns…",
+  "newTemplate.folder": "Folder",
+  "newTemplate.taken": "A template with this id already exists.",
+  "newTemplate.startFrom": "Start from",
+  "newTemplate.basicDesc": "A clean, ready-to-use resume layout.",
+  "newTemplate.blank": "Blank",
+  "newTemplate.blankDesc": "Just a name and a summary. Build it your way.",
+  "newTemplate.copyOf": (p) => `Copy of templates/${p.id}`,
+
+  // New resume dialog
+  "newResume.title": "New resume",
+  "newResume.subtitle": "Only the content lives here. The look comes from the template.",
+  "newResume.submit": "Create resume",
+  "newResume.name": "Name",
+  "newResume.namePlaceholder": "Back-end (EN), Design, Academia…",
+  "newResume.file": "File",
+  "newResume.taken": "A resume with this id already exists.",
+  "newResume.template": "Template",
+  "newResume.content": "Content",
+  "newResume.sample": "Sample content",
+  "newResume.sampleDesc": "Placeholder text from the template, ready to replace.",
+  "newResume.copyOf": (p) => `Copy of ${p.id}`,
+  "newResume.copyDesc": "Start from this resume's content and tailor it.",
+
+  // Content form
+  "form.basics": "Basics",
+  "form.addSection": "Add section",
+  "form.removeSection": "Remove section",
+  "form.confirmRemoveSection": (p) => `Remove the whole "${p.name}" section?`,
+  "form.addItem": (p) => `＋ Add ${p.noun}`,
+  "form.newItem": (p) => `New ${p.noun}`,
+  "form.dragToReorder": "Drag to reorder",
+  "form.duplicate": "Duplicate",
+  "form.remove": "Remove",
+  "form.confirmRemoveItem": (p) => `Remove "${p.title}"?`,
+  "form.addBullet": "＋ Add bullet",
+  "form.removeBullet": "Remove bullet",
+  "form.bulletPlaceholder": "Describe an achievement…",
+  "form.tagPlaceholder": "Type and press Enter",
+  "form.removeTag": (p) => `Remove ${p.tag}`,
+} satisfies Record<string, Entry>;
+
+export type Key = keyof typeof en;
+
+const pt: Record<Key, Entry> = {
+  "welcome.tagline": "Escreva o conteúdo uma vez. Mude o visual de todos os currículos alterando um template.",
+  "welcome.open": "Abrir workspace",
+  "welcome.new": "Novo workspace",
+  "welcome.pickNew": "Pasta para o novo workspace",
+  "welcome.featureTemplates": "Templates em Typst",
+  "welcome.featureContent": "Conteúdo em YAML",
+  "welcome.featureAgents": "Feito para agentes de IA",
+  "welcome.footer": "Um workspace é só uma pasta. Use git, seu editor ou um agente junto com o app.",
+
+  "nav.overview": "Visão geral",
+  "nav.profile": "Perfil",
+  "nav.templates": "Templates",
+  "nav.settings": "Ajustes",
+  "nav.switch": "Trocar workspace",
+  "nav.newTemplate": "Novo template",
+  "nav.editLayout": "Editar layout do template",
+  "nav.newResumeWith": "Novo currículo com este template",
+
+  "home.subtitle": "Edite o conteúdo de um currículo, ou um template para mudar o visual de todos que o usam.",
+  "home.templates": (p) => `${p.n} ${plural(p.n, "template", "templates")}`,
+  "home.resumes": (p) => `${p.n} ${plural(p.n, "currículo", "currículos")}`,
+  "home.editLayout": "Editar layout",
+  "home.noResumes": "Nenhum currículo ainda",
+  "home.newResume": "＋ Novo currículo",
+  "home.newTemplate": "＋ Novo template",
+
+  "common.save": "Salvar",
+  "common.cancel": "Cancelar",
+  "common.close": "Fechar",
+  "common.delete": "Excluir",
+  "common.creating": "Criando…",
+  "common.saved": "Salvo",
+
+  "resume.exportPdf": "Exportar PDF",
+  "resume.confirmDelete": (p) => `Excluir o currículo "${p.id}"? Isso apaga resumes/${p.id}.yaml.`,
+  "resume.exportFailed": "Falha ao exportar — veja os erros",
+  "resume.exported": (p) => `Exportado para ${p.path}`,
+
+  "template.usedBy": (p) => `usado por ${p.n} ${plural(p.n, "currículo", "currículos")}`,
+  "template.previewHint": "O preview usa o sample.yaml",
+  "template.saved": (p) => `Salvo — ${p.n} ${plural(p.n, "currículo atualizado", "currículos atualizados")}`,
+
+  "profile.title": "Perfil",
+  "profile.shared": "compartilhado por todos os currículos",
+  "profile.saved": "Salvo — vale para todos os currículos",
+
+  "preview.compiling": "Compilando…",
+  "preview.errors": (p) => `${p.n} ${plural(p.n, "erro", "erros")}`,
+  "preview.upToDate": "Atualizado",
+  "preview.warnings": (p) => `${p.n} ${plural(p.n, "aviso", "avisos")}`,
+  "preview.error": "erro",
+  "preview.warning": "aviso",
+  "preview.hint": "dica",
+
+  "settings.title": "Ajustes",
+  "settings.subtitle": "Idioma, temas, cores e tipografia. Salvos por usuário, não por workspace.",
+  "settings.language": "Idioma",
+  "settings.theme": "Tema",
+  "settings.openThemes": "Abrir pasta de temas",
+  "settings.dark": "Escuro",
+  "settings.light": "Claro",
+  "settings.themesHint":
+    "Temas personalizados são arquivos JSON na pasta de temas, no mesmo formato dos embutidos (id, name, dark, colors). Reabra os ajustes para carregar arquivos novos.",
+  "settings.accent": "Cor de destaque",
+  "settings.resetAccent": "Voltar à do tema",
+  "settings.saveAsPlaceholder": "Salvar como novo tema…",
+  "settings.saveTheme": "Salvar tema",
+  "settings.font": "Fonte",
+  "settings.fontSystem": "Sistema",
+  "settings.fontSerif": "Serifada",
+  "settings.corners": "Cantos",
+  "settings.sharp": "Retos",
+  "settings.soft": "Suaves",
+  "settings.round": "Redondos",
+  "settings.size": (p) => `Tamanho da interface · ${p.n}%`,
+
+  "window.minimize": "Minimizar",
+  "window.maximize": "Maximizar",
+  "window.restore": "Restaurar",
+
+  "newTemplate.title": "Novo template",
+  "newTemplate.subtitle": "O template é o layout. Todo currículo ligado a ele acompanha as mudanças.",
+  "newTemplate.submit": "Criar template",
+  "newTemplate.name": "Nome",
+  "newTemplate.namePlaceholder": "Moderno, Acadêmico, Duas colunas…",
+  "newTemplate.folder": "Pasta",
+  "newTemplate.taken": "Já existe um template com esse id.",
+  "newTemplate.startFrom": "Começar a partir de",
+  "newTemplate.basicDesc": "Um layout limpo, pronto para usar.",
+  "newTemplate.blank": "Em branco",
+  "newTemplate.blankDesc": "Só um nome e um resumo. Monte do seu jeito.",
+  "newTemplate.copyOf": (p) => `Cópia de templates/${p.id}`,
+
+  "newResume.title": "Novo currículo",
+  "newResume.subtitle": "Aqui fica só o conteúdo. O visual vem do template.",
+  "newResume.submit": "Criar currículo",
+  "newResume.name": "Nome",
+  "newResume.namePlaceholder": "Back-end (EN), Design, Acadêmico…",
+  "newResume.file": "Arquivo",
+  "newResume.taken": "Já existe um currículo com esse id.",
+  "newResume.template": "Template",
+  "newResume.content": "Conteúdo",
+  "newResume.sample": "Conteúdo de exemplo",
+  "newResume.sampleDesc": "Texto de exemplo do template, pronto para substituir.",
+  "newResume.copyOf": (p) => `Cópia de ${p.id}`,
+  "newResume.copyDesc": "Comece pelo conteúdo deste currículo e adapte.",
+
+  "form.basics": "Básico",
+  "form.addSection": "Adicionar seção",
+  "form.removeSection": "Remover seção",
+  "form.confirmRemoveSection": (p) => `Remover a seção "${p.name}" inteira?`,
+  "form.addItem": (p) => `＋ Adicionar ${p.noun}`,
+  "form.newItem": (p) => `Novo item: ${p.noun}`,
+  "form.dragToReorder": "Arraste para reordenar",
+  "form.duplicate": "Duplicar",
+  "form.remove": "Remover",
+  "form.confirmRemoveItem": (p) => `Remover "${p.title}"?`,
+  "form.addBullet": "＋ Adicionar tópico",
+  "form.removeBullet": "Remover tópico",
+  "form.bulletPlaceholder": "Descreva uma conquista…",
+  "form.tagPlaceholder": "Digite e aperte Enter",
+  "form.removeTag": (p) => `Remover ${p.tag}`,
+};
+
+export const LOCALES = { en: "English", pt: "Português" } as const;
+export type Locale = keyof typeof LOCALES;
+
+const dictionaries: Record<Locale, Record<Key, Entry>> = { en, pt };
+
+/** Locale from the OS / browser, used until the user picks one. */
+export function systemLocale(): Locale {
+  return navigator.language.toLowerCase().startsWith("pt") ? "pt" : "en";
+}
+
+class I18n {
+  locale = $state<Locale>(systemLocale());
+
+  t = (key: Key, params: Params = {}): string => {
+    const entry = dictionaries[this.locale][key] ?? en[key];
+    return typeof entry === "function" ? entry(params) : entry;
+  };
+}
+
+export const i18n = new I18n();
+/** Translates a UI string in the current locale. Reactive inside components. */
+export const t = i18n.t;
