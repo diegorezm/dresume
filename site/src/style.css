@@ -427,3 +427,23 @@ kbd { background: var(--surface); border: 1px solid var(--border); border-bottom
 .swatch i { border-radius: 4px; }
 @media (max-width: 900px) { .themes { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 480px) { .themes { grid-template-columns: repeat(2, 1fr); } }
+
+/* softer everywhere: hairline borders, barely-there shadows */
+:root {
+  --soft-border: color-mix(in srgb, var(--text) 7%, transparent);
+  --shadow: 0 1px 2px color-mix(in srgb, var(--text) 4%, transparent);
+  --shadow-lg: 0 6px 18px -10px color-mix(in srgb, var(--text) 18%, transparent);
+}
+.card, .tile, .stat, .tour figure, .table, .prose pre, .pillnav, .panel { border-color: var(--soft-border); }
+.theme-card,
+.theme-card:nth-child(odd),
+.theme-card:nth-child(even),
+.theme-card:hover {
+  border: 1px solid var(--soft-border);
+  background: var(--surface);
+  box-shadow: none;
+  transform: none;
+}
+.theme-card:hover { border-color: color-mix(in srgb, var(--text) 14%, transparent); }
+.theme-card.on { border-color: color-mix(in srgb, var(--accent) 45%, transparent); background: var(--surface); }
+.swatch { box-shadow: inset 0 0 0 1px var(--soft-border); }
