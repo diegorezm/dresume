@@ -7,10 +7,13 @@
 //!
 //! ```text
 //! claude   claude -p --input-format stream-json --output-format stream-json
+//! codex    codex app-server                 (JSON-RPC)
 //! ```
 
 mod claude;
+mod codex;
 mod process;
+mod rpc;
 
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -24,14 +27,16 @@ use tokio::sync::mpsc;
 #[serde(rename_all = "lowercase")]
 pub enum AgentKind {
     Claude,
+    Codex,
 }
 
 impl AgentKind {
-    pub const ALL: &[AgentKind] = &[AgentKind::Claude];
+    pub const ALL: &[AgentKind] = &[AgentKind::Claude, AgentKind::Codex];
 
     pub fn name(self) -> &'static str {
         match self {
             AgentKind::Claude => "Claude Code",
+            AgentKind::Codex => "Codex",
         }
     }
 
@@ -39,6 +44,7 @@ impl AgentKind {
     fn program(self) -> &'static str {
         match self {
             AgentKind::Claude => "claude",
+            AgentKind::Codex => "codex",
         }
     }
 }
@@ -168,6 +174,7 @@ pub fn start(kind: AgentKind, mut opts: SessionOptions, sink: EventSink) -> Sess
     let task = tokio::spawn(async move {
         let result = match kind {
             AgentKind::Claude => claude::run(opts, sink.clone(), rx).await,
+            AgentKind::Codex => codex::run(opts, sink.clone(), rx).await,
         };
         if let Err(e) = result {
             sink(AgentEvent::Error { message: format!("{e:#}") });
