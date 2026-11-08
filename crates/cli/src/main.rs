@@ -1,3 +1,5 @@
+#[cfg(test)]
+mod docs;
 mod mcp;
 
 use std::fs;
