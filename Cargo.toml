@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/core", "crates/cli", "app/src-tauri"]
+members = ["crates/core", "crates/agent", "crates/cli", "app/src-tauri"]
 
 [workspace.package]
 version = "0.1.0"
@@ -9,6 +9,7 @@ license = "AGPL-3.0-or-later"
 
 [workspace.dependencies]
 dresume-core = { path = "crates/core" }
+dresume-agent = { path = "crates/agent" }
 anyhow = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }

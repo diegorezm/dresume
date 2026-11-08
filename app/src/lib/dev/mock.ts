@@ -6,6 +6,7 @@ export async function installMock() {
   const fixture = (await import("./fixture.json")).default as any;
   let settings: Record<string, unknown> = { lastWorkspace: fixture.summary.root };
   const hidden: Record<string, string[]> = {};
+  const chats: Record<string, unknown[]> = {};
 
   mockIPC((cmd, args: any) => {
     switch (cmd) {
@@ -34,6 +35,12 @@ export async function installMock() {
         return { svg: id ? fixture.svg[id] : [], diagnostics: [] };
       }
       case "highlight_typst": return roughHighlight(args.text);
+      // The agent panel lists a fake agent; sessions start but never answer in the browser.
+      case "list_agents": return [{ kind: "claude", name: "Claude Code", path: "claude", version: "dev mock" }];
+      case "agent_start": return 1;
+      case "load_chat": return chats[args.key] ?? [];
+      case "save_chat": chats[args.key] = args.messages; return null;
+      case "plugin:event|listen": return 0;
       case "plugin:dialog|open":
       case "plugin:dialog|save": return null;
       default: return null;

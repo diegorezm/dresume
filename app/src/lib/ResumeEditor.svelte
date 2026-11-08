@@ -6,6 +6,8 @@
   import Preview from "./Preview.svelte";
   import SplitPane from "./SplitPane.svelte";
   import ViewSwitch from "./ViewSwitch.svelte";
+  import AgentPanel from "./AgentPanel.svelte";
+  import { onDestroy } from "svelte";
   import { isShortcut, layout } from "./layout.svelte";
 
   interface Props {
@@ -27,6 +29,8 @@
   let busy = $state(false);
   let message = $state("");
   let loadError = $state("");
+  /** The file changed on disk while there were unsaved edits. */
+  let stale = $state(false);
 
   /** Plain copy of the reactive value for IPC. */
   const plain = (): Json => JSON.parse(JSON.stringify(value));
@@ -45,20 +49,36 @@
     }
   }, 250);
 
-  $effect(() => {
+  function load() {
     const current = id;
     loadError = "";
-    Promise.all([api.getResume(current), api.getSchema(templateId)])
+    return Promise.all([api.getResume(current), api.getSchema(templateId)])
       .then(([v, s]) => {
         if (current !== id) return;
         value = v;
         schema = s;
         dirty = false;
+        stale = false;
         errors = [];
         render(plain());
       })
       .catch((e) => (loadError = String(e)));
+  }
+
+  $effect(() => {
+    load();
   });
+
+  // Edits from outside the app (the agent, an editor, git) show up live.
+  const unlisten = api.onWorkspaceChanged((paths) => {
+    if (paths.includes(`resumes/${id}.yaml`)) {
+      if (dirty) stale = true;
+      else load();
+    } else if (paths.some((p) => p === "profile.yaml" || p.startsWith(`templates/${templateId}/`))) {
+      render(plain());
+    }
+  });
+  onDestroy(() => unlisten.then((f) => f()));
 
   function update(v: Json | undefined) {
     value = (v ?? {}) as Record<string, Json>;
@@ -96,6 +116,11 @@
   let narrow = $state(false);
 
   function onkeydown(e: KeyboardEvent) {
+    if (isShortcut(e, "j")) {
+      e.preventDefault();
+      layout.toggleAgent();
+      return;
+    }
     if (isShortcut(e, "\\")) {
       e.preventDefault();
       layout.togglePreview("resume");
@@ -120,17 +145,22 @@
       <ViewSwitch id="resume" {narrow} />
       {#if message}<span class="flash">{message}</span>{/if}
       <button class="ghost danger" onclick={remove}>{t("common.delete")}</button>
+      <button class:active={layout.agent} onclick={() => layout.toggleAgent()} title={t("agent.toggle")}>✦ {t("agent.title")}</button>
       <button onclick={exportPdf}>{t("resume.exportPdf")}</button>
       <button class="primary" onclick={persist} disabled={!dirty}>{t("common.save")}</button>
     </div>
   </header>
 
+<div class="body">
 <div class="panes">
 <SplitPane id="resume" bind:narrow>
   {#snippet left()}
   <section class="form-pane">
     {#if loadError}
       <p class="error">{loadError}</p>
+    {/if}
+    {#if stale}
+      <p class="stale">{t("agent.changedOnDisk")} <button class="small" onclick={load}>{t("agent.reload")}</button></p>
     {/if}
     {#if errors.length}
       <ul class="schema-errors">
@@ -153,6 +183,10 @@
   {/snippet}
 </SplitPane>
 </div>
+{#if layout.agent}
+  <div class="agent-pane"><AgentPanel resume={id} /></div>
+{/if}
+</div>
 </div>
 
 <style>
@@ -162,9 +196,33 @@
     height: 100%;
     min-height: 0;
   }
-  .panes {
+  .body {
     flex: 1;
     min-height: 0;
+    display: flex;
+  }
+  .panes {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+  }
+  .agent-pane {
+    flex: none;
+    width: clamp(18rem, 32%, 26rem);
+    min-height: 0;
+  }
+  .stale {
+    margin: 0;
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: color-mix(in srgb, var(--warn) 15%, var(--surface));
+    font-size: 0.85rem;
+  }
+  button.active {
+    border-color: var(--accent);
+    color: var(--accent);
   }
   .form-pane {
     height: 100%;

@@ -25,5 +25,7 @@ serde_json.workspace = true
 serde_yaml.workspace = true
 anyhow.workspace = true
 dresume-core.workspace = true
+dresume-agent.workspace = true
+notify = "8"
 tauri-plugin-dialog = "2"
 

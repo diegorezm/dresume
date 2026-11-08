@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { i18n, systemLocale, type Locale } from "./i18n.svelte";
+import type { AgentKind } from "./api";
 
 /**
  * A theme is a set of colors. Users add their own as JSON files in the
@@ -44,6 +45,8 @@ export interface Settings {
   lastWorkspace: string | null;
   /** UI language; `null` follows the system. */
   locale: Locale | null;
+  /** AI agent used by the agent panel; `null` picks the first one installed. */
+  agent: AgentKind | null;
 }
 
 export const BUILTIN_THEMES: Theme[] = [
@@ -171,6 +174,7 @@ export const DEFAULT_SETTINGS: Settings = {
   radius: "soft",
   lastWorkspace: null,
   locale: null,
+  agent: null,
 };
 
 const FONTS: Record<FontChoice, string> = {

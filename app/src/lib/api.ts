@@ -1,4 +1,5 @@
-import { invoke } from "@tauri-apps/api/core";
+import { Channel, invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 
 export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 
@@ -47,6 +48,29 @@ export interface Preview {
   diagnostics: Diagnostic[];
 }
 
+/** AI agents installed on this machine (Claude Code, Codex, …). */
+export type AgentKind = "claude";
+export type PermissionMode = "ask" | "autoEdit" | "readOnly";
+
+export interface AgentInfo {
+  kind: AgentKind;
+  name: string;
+  path: string | null;
+  version: string | null;
+}
+
+export type ToolStatus = "running" | "done" | "failed";
+
+/** Normalized events from any agent (see crates/agent). */
+export type AgentEvent =
+  | { type: "ready" }
+  | { type: "text"; text: string }
+  | { type: "tool"; id: string; title: string; status: ToolStatus }
+  | { type: "permission"; id: string; title: string; detail: string | null }
+  | { type: "turn_end"; error: string | null }
+  | { type: "error"; message: string }
+  | { type: "exited" };
+
 export const api = {
   openWorkspace: (path: string, create = false) =>
     invoke<Summary>("open_workspace", { path, create }),
@@ -74,6 +98,24 @@ export const api = {
     invoke<void>("write_template_file", { template, name, text }),
   previewTemplate: (template: string, files: Record<string, string>) =>
     invoke<Preview>("preview_template", { template, files }),
+
+  listAgents: () => invoke<AgentInfo[]>("list_agents"),
+  /** Starts an agent in the workspace; returns the session id. */
+  agentStart: (kind: AgentKind, mode: PermissionMode, resume: string | null, onEvent: (e: AgentEvent) => void) => {
+    const channel = new Channel<AgentEvent>();
+    channel.onmessage = onEvent;
+    return invoke<number>("agent_start", { kind, mode, resume, onEvent: channel });
+  },
+  agentSend: (id: number, text: string) => invoke<void>("agent_send", { id, text }),
+  agentRespond: (id: number, request: string, allow: boolean) =>
+    invoke<void>("agent_respond", { id, request, allow }),
+  agentCancel: (id: number) => invoke<void>("agent_cancel", { id }),
+  agentStop: (id: number) => invoke<void>("agent_stop", { id }),
+  loadChat: <T>(key: string) => invoke<T[]>("load_chat", { key }),
+  saveChat: <T>(key: string, messages: T[]) => invoke<void>("save_chat", { key, messages }),
+  /** Files changed on disk (workspace-relative), from the app or anything else. Returns unlisten. */
+  onWorkspaceChanged: (fn: (paths: string[]) => void) =>
+    listen<{ paths: string[] }>("workspace-changed", (e) => fn(e.payload.paths)),
 };
 
 /** The subset of JSON Schema that the form generator understands. */

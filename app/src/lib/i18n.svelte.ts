@@ -152,6 +152,28 @@ const en = {
   "form.bulletPlaceholder": "Describe an achievement…",
   "form.tagPlaceholder": "Type and press Enter",
   "form.removeTag": (p) => `Remove ${p.tag}`,
+
+  // Agent panel
+  "agent.title": "AI agent",
+  "agent.toggle": "AI agent (Ctrl+J)",
+  "agent.none": "No AI agent found on this computer.",
+  "agent.noneHint": "Install Claude Code and log in, then reopen this panel. dresume uses the agents you already have; it never calls a model API itself.",
+  "agent.placeholder": "Ask for a change: tailor it to a job posting, tighten the summary…",
+  "agent.send": "Send",
+  "agent.stop": "Stop",
+  "agent.newChat": "New chat",
+  "agent.starting": "Starting…",
+  "agent.working": "Working…",
+  "agent.exited": "The agent stopped. Send a message to start it again.",
+  "agent.allow": "Allow",
+  "agent.deny": "Deny",
+  "agent.allowed": "Allowed",
+  "agent.denied": "Denied",
+  "agent.permission": "Wants to run",
+  "agent.empty": "The agent edits this workspace's files directly; the preview follows its changes.",
+  "agent.reloaded": "Reloaded — changed on disk",
+  "agent.changedOnDisk": "This resume changed on disk.",
+  "agent.reload": "Reload",
 } satisfies Record<string, Entry>;
 
 export type Key = keyof typeof en;
@@ -291,6 +313,27 @@ const pt: Record<Key, Entry> = {
   "form.bulletPlaceholder": "Descreva uma conquista…",
   "form.tagPlaceholder": "Digite e aperte Enter",
   "form.removeTag": (p) => `Remover ${p.tag}`,
+
+  "agent.title": "Agente de IA",
+  "agent.toggle": "Agente de IA (Ctrl+J)",
+  "agent.none": "Nenhum agente de IA encontrado neste computador.",
+  "agent.noneHint": "Instale o Claude Code e faça login, depois reabra este painel. O dresume usa os agentes que você já tem; ele nunca chama uma API de modelo por conta própria.",
+  "agent.placeholder": "Peça uma mudança: adaptar a uma vaga, enxugar o resumo…",
+  "agent.send": "Enviar",
+  "agent.stop": "Parar",
+  "agent.newChat": "Nova conversa",
+  "agent.starting": "Iniciando…",
+  "agent.working": "Trabalhando…",
+  "agent.exited": "O agente parou. Envie uma mensagem para iniciá-lo de novo.",
+  "agent.allow": "Permitir",
+  "agent.deny": "Negar",
+  "agent.allowed": "Permitido",
+  "agent.denied": "Negado",
+  "agent.permission": "Quer executar",
+  "agent.empty": "O agente edita os arquivos deste workspace diretamente; o preview acompanha as mudanças.",
+  "agent.reloaded": "Recarregado — alterado no disco",
+  "agent.changedOnDisk": "Este currículo foi alterado no disco.",
+  "agent.reload": "Recarregar",
 };
 
 export const LOCALES = { en: "English", pt: "Português" } as const;

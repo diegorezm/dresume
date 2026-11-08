@@ -1,3 +1,6 @@
+mod agent;
+mod watch;
+
 use std::fs;
 use std::path::PathBuf;
 use std::sync::Mutex;
@@ -12,6 +15,10 @@ use tauri::{AppHandle, Manager, State};
 
 #[derive(Default)]
 struct AppState(Mutex<Option<Workspace>>);
+
+/// Watcher of the open workspace; replaced when another one is opened.
+#[derive(Default)]
+struct WatchState(Mutex<Option<notify::RecommendedWatcher>>);
 
 /// Errors cross the IPC boundary as plain strings.
 type CmdResult<T> = Result<T, String>;
@@ -50,7 +57,13 @@ struct Preview {
 }
 
 #[tauri::command]
-fn open_workspace(state: State<AppState>, path: PathBuf, create: bool) -> CmdResult<Summary> {
+fn open_workspace(
+    app: AppHandle,
+    state: State<AppState>,
+    watcher: State<WatchState>,
+    path: PathBuf,
+    create: bool,
+) -> CmdResult<Summary> {
     let ws = if create {
         let name = path.file_name().map_or("My resumes".into(), |n| n.to_string_lossy());
         Workspace::init(&path, &name)
@@ -59,6 +72,8 @@ fn open_workspace(state: State<AppState>, path: PathBuf, create: bool) -> CmdRes
     }
     .map_err(err)?;
     let out = summary(&ws).map_err(err)?;
+    // Live reload is a convenience: the app works without it.
+    *watcher.0.lock().unwrap() = watch::watch(app, ws.root().to_path_buf()).ok();
     *state.0.lock().unwrap() = Some(ws);
     Ok(out)
 }
@@ -269,6 +284,8 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .manage(AppState::default())
+        .manage(WatchState::default())
+        .manage(agent::AgentState::default())
         .invoke_handler(tauri::generate_handler![
             open_workspace,
             workspace_summary,
@@ -294,6 +311,14 @@ pub fn run() {
             save_theme,
             open_themes_dir,
             highlight_typst,
+            agent::list_agents,
+            agent::agent_start,
+            agent::agent_send,
+            agent::agent_respond,
+            agent::agent_cancel,
+            agent::agent_stop,
+            agent::load_chat,
+            agent::save_chat,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
