@@ -27,6 +27,7 @@ crates/
     src/world.rs              Typst `World` impl: fonts (system+embedded+<ws>/fonts), files, packages, overlay
     src/compile.rs            compile() / compile_template_preview() -> PDF and/or per-page SVG + Diagnostics
     src/highlight.rs          Typst syntax highlighting (typst-syntax) with UTF-16 offsets for the editor
+    src/profile.rs            profile handed to templates: link normalization + per-template `profile.hide`
     assets/AGENTS.md          guide copied into every new workspace (user-facing, agent-oriented)
     assets/starter/           "Basic" template embedded with include_str! and written by `init`
   cli/src/main.rs             `dresume` binary (clap). Every command supports --json
@@ -42,10 +43,11 @@ app/                          desktop app
   src/lib/i18n.svelte.ts      UI translations (en = source of truth, pt) and t()
   src/lib/ResumeEditor.svelte content editor + live preview + PDF export
   src/lib/TemplateEditor.svelte template code editor (tabs per file) + preview against sample.yaml
-  src/lib/ProfileEditor.svelte profile.yaml editor
+  src/lib/ProfileEditor.svelte profile.yaml editor + "show in templates" visibility table
   src/lib/CodeEditor.svelte   CodeMirror 6 wrapper, themed through CSS variables
   src/lib/typstHighlight.ts   CodeMirror extension calling the highlight_typst command
   src/lib/Preview.svelte      SVG pages, zoom, diagnostics list
+  src/lib/SplitPane.svelte    resizable two-pane layout (ratio saved in localStorage per id)
   src/lib/form/               schema-driven content form (ResumeForm > Field > ItemList/BulletList/TagInput)
   src/lib/Modal.svelte        shared dialog shell + .m-* classes for dialog bodies
   src/lib/New*Dialog.svelte   create template / create resume dialogs
@@ -67,9 +69,12 @@ docs/images/                  README images (rendered with the typst CLI)
 3. **Templates are data-driven.** A template reads `sys.inputs.resume` and `sys.inputs.profile`
    (workspace-rooted paths). The app's form is generated from the template's `schema.json`. Don't
    special-case a template in app code.
-4. **Unsaved edits use the overlay.** Live preview passes in-memory file contents
+4. **Templates never read profile.yaml directly.** Core writes a normalized copy (plain URLs become
+   `{label, url}`, the template's `profile.hide` keys removed) into the overlay at `.dresume/profile.yaml`
+   and passes that path. Templates render contact fields generically so added/hidden fields can't break them.
+5. **Unsaved edits use the overlay.** Live preview passes in-memory file contents
    (`Overlay`: workspace-relative path → text) instead of writing to disk.
-5. **Agent-friendly by default.** New CLI commands support `--json`, return non-zero on failure, and are
+6. **Agent-friendly by default.** New CLI commands support `--json`, return non-zero on failure, and are
    documented in `crates/core/assets/AGENTS.md` (then copied to `example/AGENTS.md`).
 
 ## Conventions
