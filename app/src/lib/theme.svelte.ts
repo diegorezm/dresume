@@ -49,6 +49,9 @@ export interface Settings {
   agent: AgentKind | null;
   /** What the agent may do without asking. */
   agentMode: PermissionMode;
+  /** Model and reasoning effort per agent; missing or `null` uses the agent's default. */
+  agentModel: Partial<Record<AgentKind, string | null>>;
+  agentEffort: Partial<Record<AgentKind, string | null>>;
 }
 
 export const BUILTIN_THEMES: Theme[] = [
@@ -178,6 +181,8 @@ export const DEFAULT_SETTINGS: Settings = {
   locale: null,
   agent: null,
   agentMode: "autoEdit",
+  agentModel: {},
+  agentEffort: {},
 };
 
 const FONTS: Record<FontChoice, string> = {

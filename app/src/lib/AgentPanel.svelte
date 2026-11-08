@@ -2,7 +2,18 @@
   import { onDestroy, tick, untrack } from "svelte";
   import { t } from "./i18n.svelte";
   import { appearance } from "./theme.svelte";
-  import { api, type AgentEvent, type AgentInfo, type AgentKind, type FileChange, type ToolStatus } from "./api";
+  import { layout } from "./layout.svelte";
+  import {
+    api,
+    type AgentEvent,
+    type AgentInfo,
+    type AgentKind,
+    type FileChange,
+    type ModelOption,
+    type PermissionMode,
+    type ToolStatus,
+  } from "./api";
+  import type { Key } from "./i18n.svelte";
 
   interface Props {
     /** Resume the user has open; the agent is told about it and the chat is kept per resume. */
@@ -35,14 +46,54 @@
 
   api.listAgents().then((list) => (agents = list)).catch(() => (agents = []));
 
+  // Model and effort are remembered per agent; `null` keeps the agent's own default.
+  let models = $state<ModelOption[]>([]);
+  $effect(() => {
+    const k = kind;
+    models = [];
+    if (k) api.agentModels(k).then((list) => k === kind && (models = list)).catch(() => {});
+  });
+  const model = $derived(models.find((m) => kind && m.id === appearance.settings.agentModel[kind]) ?? null);
+  /** Efforts of the chosen model; with the default model, those of the first one. */
+  const efforts = $derived((model ?? models[0])?.efforts ?? []);
+  const effort = $derived.by(() => {
+    const e = kind ? appearance.settings.agentEffort[kind] : undefined;
+    return e && efforts.includes(e) ? e : null;
+  });
+
+  const modes: { id: PermissionMode; label: Key; desc: Key }[] = [
+    { id: "ask", label: "agent.modeAsk", desc: "agent.modeAskDesc" },
+    { id: "autoEdit", label: "agent.modeAutoEdit", desc: "agent.modeAutoEditDesc" },
+    { id: "readOnly", label: "agent.modeReadOnly", desc: "agent.modeReadOnlyDesc" },
+  ];
+  const mode = $derived(modes.find((m) => m.id === appearance.settings.agentMode) ?? modes[1]);
+
+  /** Which popover menu is open. */
+  let menu = $state<"agent" | "model" | "mode" | null>(null);
+
+  function setModel(id: string | null) {
+    if (!kind) return;
+    appearance.update({ agentModel: { ...appearance.settings.agentModel, [kind]: id } });
+  }
+
+  function setEffort(e: string | null) {
+    if (!kind) return;
+    appearance.update({ agentEffort: { ...appearance.settings.agentEffort, [kind]: e } });
+  }
+
+  /** Effort ids come from the agent ("xhigh", "max"…); shown capitalized. */
+  const effortName = (e: string) => (e === "xhigh" ? "X-High" : e[0].toUpperCase() + e.slice(1));
+
   /** Incremented on every new session so late events from a stopped one are ignored. */
   let generation = 0;
   /** Sessions whose process exited; kept alive in the backend for undo until the chat moves on. */
   let dead: number[] = [];
 
-  // A new agent or permission mode applies from the next session.
+  // A new agent, model, effort or permission mode applies from the next session.
   $effect(() => {
     void kind;
+    void model;
+    void effort;
     void appearance.settings.agentMode;
     untrack(stop);
   });
@@ -174,7 +225,7 @@
         status = "starting";
         const mine = ++generation;
         const mode = appearance.settings.agentMode;
-        const id = await api.agentStart(kind, mode, resume, (e) => mine === generation && onEvent(e));
+        const id = await api.agentStart(kind, mode, model?.id ?? null, effort, resume, (e) => mine === generation && onEvent(e));
         if (mine !== generation) return void api.agentStop(id);
         session = id;
       }
@@ -199,7 +250,7 @@
   }
 
   function pick(next: AgentKind) {
-    stop();
+    menu = null;
     appearance.update({ agent: next });
   }
 
@@ -211,17 +262,25 @@
   }
 </script>
 
+<svelte:window onclick={(e) => { if (!(e.target as Element).closest?.(".menu-wrap")) menu = null; }} />
+
 <aside class="agent">
   <header>
-    <strong>✦ {t("agent.title")}</strong>
-    {#if installed.length > 1}
-      <select value={kind} onchange={(e) => pick(e.currentTarget.value as AgentKind)}>
-        {#each installed as a (a.kind)}<option value={a.kind}>{a.name}</option>{/each}
-      </select>
-    {:else if kind}
-      <span class="muted">{installed[0].name}</span>
-    {/if}
-    <button class="ghost small" onclick={newChat} disabled={!messages.length}>{t("agent.newChat")}</button>
+    <div class="menu-wrap">
+      <button class="ghost head-btn" onclick={() => (menu = menu === "agent" ? null : "agent")} disabled={installed.length < 2}>
+        <span class="spark">✦</span> {installed.find((a) => a.kind === kind)?.name ?? t("agent.title")}{#if installed.length > 1} ▾{/if}
+      </button>
+      {#if menu === "agent"}
+        <div class="menu down" role="menu">
+          {#each installed as a (a.kind)}
+            <button class:active={a.kind === kind} onclick={() => pick(a.kind)}>{a.name}<small>{a.version ?? ""}</small></button>
+          {/each}
+        </div>
+      {/if}
+    </div>
+    <span class="grow"></span>
+    <button class="ghost icon" onclick={newChat} disabled={!messages.length} title={t("agent.newChat")} aria-label={t("agent.newChat")}>✎</button>
+    <button class="ghost icon" onclick={() => layout.toggleAgent()} title={t("agent.close")} aria-label={t("agent.close")}>✕</button>
   </header>
 
   {#if agents && !installed.length}
@@ -282,13 +341,54 @@
       {/if}
     </div>
 
-    <form class="compose" onsubmit={(e) => { e.preventDefault(); send(); }}>
-      <textarea rows="3" placeholder={t("agent.placeholder")} bind:value={draft} {onkeydown}></textarea>
-      <div class="row">
+    <form class="composer" onsubmit={(e) => { e.preventDefault(); send(); }}>
+      <textarea rows="2" placeholder={t("agent.placeholder")} bind:value={draft} {onkeydown}></textarea>
+      <div class="bar">
+        <div class="menu-wrap">
+          <button type="button" class="chip-btn" title={t(mode.desc)} onclick={() => (menu = menu === "mode" ? null : "mode")}>
+            {t(mode.label)} ▾
+          </button>
+          {#if menu === "mode"}
+            <div class="menu" role="menu">
+              <span class="menu-label">{t("agent.mode")}</span>
+              {#each modes as m (m.id)}
+                <button type="button" class:active={m.id === mode.id} onclick={() => { appearance.update({ agentMode: m.id }); menu = null; }}>
+                  {t(m.label)}<small>{t(m.desc)}</small>
+                </button>
+              {/each}
+            </div>
+          {/if}
+        </div>
+        <span class="grow"></span>
+        <div class="menu-wrap">
+          <button type="button" class="chip-btn model" onclick={() => (menu = menu === "model" ? null : "model")}>
+            <span class="spark">✦</span>
+            {model?.name ?? t("agent.defaultModel")}{#if effort}<span class="effort">{effortName(effort)}</span>{/if} ▾
+          </button>
+          {#if menu === "model"}
+            <div class="menu right" role="menu">
+              <span class="menu-label">{t("agent.model")}</span>
+              <button type="button" class:active={!model} onclick={() => setModel(null)}>{t("agent.defaultModel")}</button>
+              {#each models as m (m.id)}
+                <button type="button" class:active={model?.id === m.id} onclick={() => setModel(m.id)}>{m.name}</button>
+              {/each}
+              {#if efforts.length}
+                <span class="menu-label">{t("agent.effort")}</span>
+                <div class="efforts">
+                  <button type="button" class:active={!effort} onclick={() => setEffort(null)}>{t("agent.effortAuto")}</button>
+                  {#each efforts as e (e)}
+                    <button type="button" class:active={effort === e} onclick={() => setEffort(e)}>{effortName(e)}</button>
+                  {/each}
+                </div>
+              {/if}
+            </div>
+          {/if}
+        </div>
         {#if status === "working" && session !== null}
-          <button type="button" class="small" onclick={() => session !== null && api.agentCancel(session)}>{t("agent.stop")}</button>
+          <button type="button" class="send" title={t("agent.stop")} aria-label={t("agent.stop")} onclick={() => session !== null && api.agentCancel(session)}>■</button>
+        {:else}
+          <button type="submit" class="send" title={t("agent.send")} aria-label={t("agent.send")} disabled={!draft.trim() || status !== "idle"}>↑</button>
         {/if}
-        <button type="submit" class="small primary" disabled={!draft.trim() || status !== "idle"}>{t("agent.send")}</button>
       </div>
     </form>
   {/if}
@@ -306,15 +406,29 @@
   header {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.6rem 0.75rem;
+    gap: 0.25rem;
+    padding: 0.4rem 0.5rem 0.4rem 0.6rem;
     border-bottom: 1px solid var(--border);
   }
-  header strong {
-    margin-right: auto;
+  .grow {
+    flex: 1;
   }
-  header select {
-    max-width: 9rem;
+  .head-btn {
+    font-weight: 600;
+  }
+  .head-btn:disabled {
+    opacity: 1;
+    cursor: default;
+  }
+  .spark {
+    color: var(--accent);
+  }
+  .icon {
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    display: grid;
+    place-items: center;
   }
   .muted {
     color: var(--muted);
@@ -473,16 +587,147 @@
   .working {
     font-size: 0.85rem;
   }
-  .compose {
+  .composer {
+    margin: 0.5rem 0.6rem 0.7rem;
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
-    padding: 0.6rem 0.75rem 0.75rem;
-    border-top: 1px solid var(--border);
+    gap: 0.3rem;
+    padding: 0.55rem 0.55rem 0.45rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) * 1.4);
+    box-shadow: var(--shadow);
   }
-  .compose textarea {
-    resize: vertical;
-    min-height: 3.5rem;
+  .composer:focus-within {
+    border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  }
+  .composer textarea {
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    outline: none;
+    resize: none;
+    padding: 0.2rem 0.3rem;
+    min-height: 2.6rem;
     max-height: 40vh;
+    field-sizing: content;
+    font: inherit;
+    color: var(--text);
+  }
+  .bar {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  .chip-btn {
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .chip-btn:hover {
+    background: var(--surface-2);
+    color: var(--text);
+  }
+  .chip-btn.model {
+    color: var(--text);
+  }
+  .effort {
+    margin-left: 0.3rem;
+    color: var(--muted);
+  }
+  .send {
+    flex: none;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--text);
+    color: var(--surface);
+    border: none;
+    font-weight: 700;
+  }
+  .send:disabled {
+    background: var(--surface-2);
+    color: var(--muted);
+  }
+  .menu-wrap {
+    position: relative;
+  }
+  .menu {
+    position: absolute;
+    bottom: calc(100% + 0.35rem);
+    left: 0;
+    z-index: 20;
+    min-width: 12rem;
+    max-width: 18rem;
+    max-height: 50vh;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    padding: 0.3rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+  .menu.right {
+    left: auto;
+    right: 0;
+  }
+  .menu.down {
+    bottom: auto;
+    top: calc(100% + 0.25rem);
+  }
+  .menu > button {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.1rem;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-sm);
+    padding: 0.4rem 0.55rem;
+    text-align: left;
+    font-size: 0.85rem;
+    color: var(--text);
+  }
+  .menu > button:hover,
+  .menu > button.active {
+    background: var(--surface-2);
+  }
+  .menu small {
+    color: var(--muted);
+    font-size: 0.75rem;
+  }
+  .menu-label {
+    padding: 0.4rem 0.55rem 0.2rem;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+  }
+  .efforts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem;
+    padding: 0.1rem 0.4rem 0.3rem;
+  }
+  .efforts button {
+    border: 1px solid var(--border);
+    background: transparent;
+    border-radius: 999px;
+    padding: 0.15rem 0.55rem;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  .efforts button.active {
+    border-color: var(--accent);
+    color: var(--accent);
   }
 </style>

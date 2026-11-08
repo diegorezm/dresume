@@ -61,6 +61,14 @@ export interface AgentInfo {
 
 export type ToolStatus = "running" | "done" | "failed";
 
+/** A model an agent can run, with the reasoning efforts it accepts. */
+export interface ModelOption {
+  id: string;
+  name: string;
+  efforts: string[];
+  default_effort: string | null;
+}
+
 /** A file the agent created, edited or deleted since the last keep/undo. */
 export interface FileChange {
   path: string;
@@ -109,10 +117,18 @@ export const api = {
 
   listAgents: () => invoke<AgentInfo[]>("list_agents"),
   /** Starts an agent in the workspace; returns the session id. */
-  agentStart: (kind: AgentKind, mode: PermissionMode, resume: string | null, onEvent: (e: AgentEvent) => void) => {
+  agentModels: (kind: AgentKind) => invoke<ModelOption[]>("agent_models", { kind }),
+  agentStart: (
+    kind: AgentKind,
+    mode: PermissionMode,
+    model: string | null,
+    effort: string | null,
+    resume: string | null,
+    onEvent: (e: AgentEvent) => void,
+  ) => {
     const channel = new Channel<AgentEvent>();
     channel.onmessage = onEvent;
-    return invoke<number>("agent_start", { kind, mode, resume, onEvent: channel });
+    return invoke<number>("agent_start", { kind, mode, model, effort, resume, onEvent: channel });
   },
   agentSend: (id: number, text: string) => invoke<void>("agent_send", { id, text }),
   agentRespond: (id: number, request: string, allow: boolean) =>

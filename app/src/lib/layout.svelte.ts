@@ -8,6 +8,7 @@ const KEY = "dresume.layout";
 interface Saved {
   sidebar: boolean;
   agent: boolean;
+  agentWidth: number;
   panes: Record<string, PaneMode>;
 }
 
@@ -16,6 +17,8 @@ class Layout {
   sidebar = $state(true);
   /** Whether the AI agent panel is open in the resume editor. */
   agent = $state(false);
+  /** Agent panel width in px. */
+  agentWidth = $state(360);
   panes = $state<Record<string, PaneMode>>({});
 
   constructor() {
@@ -23,6 +26,7 @@ class Layout {
       const saved = JSON.parse(localStorage.getItem(KEY) ?? "{}") as Partial<Saved>;
       if (typeof saved.sidebar === "boolean") this.sidebar = saved.sidebar;
       if (typeof saved.agent === "boolean") this.agent = saved.agent;
+      if (typeof saved.agentWidth === "number") this.agentWidth = saved.agentWidth;
       if (saved.panes && typeof saved.panes === "object") this.panes = saved.panes;
     } catch {}
   }
@@ -51,9 +55,14 @@ class Layout {
     this.save();
   }
 
+  setAgentWidth(px: number) {
+    this.agentWidth = Math.round(px);
+    this.save();
+  }
+
   private save() {
     try {
-      localStorage.setItem(KEY, JSON.stringify({ sidebar: this.sidebar, agent: this.agent, panes: this.panes }));
+      localStorage.setItem(KEY, JSON.stringify({ sidebar: this.sidebar, agent: this.agent, agentWidth: this.agentWidth, panes: this.panes }));
     } catch {}
   }
 }
