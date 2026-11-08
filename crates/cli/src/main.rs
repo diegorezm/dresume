@@ -64,6 +64,13 @@ enum Command {
     Duplicate { id: String, #[arg(long)] from: String },
     /// Create a template, optionally copying an existing one (`--from @starter` copies the built-in Basic).
     NewTemplate { id: String, #[arg(long)] name: String, #[arg(long)] from: Option<String> },
+    /// Show which profile fields each template shows; with --hide, set them for one template.
+    ProfileFields {
+        template: Option<String>,
+        /// Comma-separated profile keys to hide (empty string shows everything).
+        #[arg(long)]
+        hide: Option<String>,
+    },
     /// Print a template's JSON Schema.
     Schema { template: String },
 }
@@ -220,6 +227,23 @@ fn run(cli: &Cli) -> Result<bool> {
         Command::Show { id } => {
             let value = workspace(cli)?.resume(id)?;
             println!("{}", serde_json::to_string_pretty(&value)?);
+            Ok(true)
+        }
+        Command::ProfileFields { template, hide } => {
+            let ws = workspace(cli)?;
+            if let (Some(template), Some(hide)) = (template, hide) {
+                let keys: Vec<String> =
+                    hide.split(',').map(str::trim).filter(|k| !k.is_empty()).map(Into::into).collect();
+                ws.set_hidden_profile_fields(template, &keys)?;
+            }
+            let vis = ws.profile_visibility()?;
+            emit(cli, json!(vis), || {
+                println!("fields: {}", vis.fields.join(", "));
+                for t in &vis.templates {
+                    let hidden = if t.hidden.is_empty() { "-".into() } else { t.hidden.join(", ") };
+                    println!("{} ({}): hides {hidden}", t.name, t.id);
+                }
+            });
             Ok(true)
         }
         Command::Schema { template } => {
