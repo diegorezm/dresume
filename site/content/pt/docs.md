@@ -75,11 +75,40 @@ arquivo e linha.
 O editor de perfil edita o `profile.yaml`. Links podem ser URLs simples ou `{label, url}`. A tabela
 **mostrar nos templates** escolhe quais campos cada template exibe.
 
-### Painel do agente de IA
+### Painel do agente de IA: Claude e ChatGPT {#agent-panel}
 
-Abra com <kbd>Ctrl</kbd>+<kbd>J</kbd> no editor de currículo. Ele usa o agente de IA que você já tem
-instalado (Claude Code ou Codex): peça uma mudança e o agente edita os arquivos do workspace enquanto a
-pré-visualização acompanha. O dresume nunca chama uma API de modelo por conta própria.
+Aperte <kbd>Ctrl</kbd>+<kbd>J</kbd> no editor de currículo ou de template. O painel usa um agente de IA que
+você já instalou e logou: **Claude Code**, **Codex** (com sua conta do ChatGPT), **Gemini CLI** ou
+**OpenCode**. O dresume nunca chama uma API de modelo por conta própria e não precisa de chave de API.
+
+1. Instale um agente e faça login uma vez (por exemplo `claude` ou `codex login`).
+2. Abra um currículo e aperte <kbd>Ctrl</kbd>+<kbd>J</kbd>.
+3. Peça uma mudança: *"adapte este currículo para esta vaga: …"*, *"traduza para inglês"*,
+   *"deixe em uma página"*. No editor de template: *"faça em duas colunas com barra lateral escura"*.
+4. O agente edita os arquivos e a pré-visualização acompanha. Revise o diff e **Mantenha** ou **Desfaça** cada mudança.
+
+Escolha o modelo e o nível de raciocínio no campo de mensagem. As **Permissões** (também nos Ajustes)
+definem o que o agente pode fazer:
+
+- **Perguntar antes**: toda edição e comando esperam sua aprovação.
+- **Editar sozinho**: edições nos arquivos do workspace passam; comandos perguntam antes.
+- **Somente leitura**: o agente pode ler e sugerir, mas toda mudança é recusada.
+
+### Claude Desktop e outros clientes MCP {#mcp}
+
+O `dresume mcp` serve um workspace via MCP (stdio), então qualquer cliente MCP consegue listar, validar,
+mostrar, gerar e pré-visualizar currículos e templates. O app já conecta isso às sessões de agente quando a
+CLI está no PATH.
+
+```bash
+claude mcp add dresume -- dresume -w ~/my-resumes mcp
+```
+
+No Claude Desktop, adicione ao `claude_desktop_config.json`:
+
+```json
+{ "mcpServers": { "dresume": { "command": "dresume", "args": ["-w", "/caminho/para/my-resumes", "mcp"] } } }
+```
 
 ## Ajustes {#settings}
 

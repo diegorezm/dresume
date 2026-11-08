@@ -35,7 +35,7 @@
       </div>
       <div class="tile orange wide reveal">
         <div class="tags" aria-hidden="true">
-          <span style="--r:-14deg">Typst</span><span style="--r:8deg">YAML</span><span style="--r:-4deg">JSON Schema</span><span style="--r:16deg">PDF / SVG</span><span style="--r:-9deg">CLI --json</span><span style="--r:5deg">MCP</span><span style="--r:-18deg">Claude Code</span><span style="--r:10deg">Codex</span><span style="--r:-3deg">git</span>
+          <span style="--r:-14deg">Typst</span><span style="--r:8deg">YAML</span><span style="--r:-4deg">JSON Schema</span><span style="--r:16deg">PDF / SVG</span><span style="--r:-9deg">CLI --json</span><span style="--r:5deg">MCP</span><span style="--r:-18deg">Claude Code</span><span style="--r:10deg">ChatGPT · Codex</span><span style="--r:-3deg">git</span>
         </div>
         <div class="tile-text"><h3>{{f5.t}}</h3><p>{{f5.d}}</p></div>
       </div>
@@ -114,6 +114,7 @@
       <span class="eyebrow">{{eyebrow.agents}}</span>
       <h2 class="title">{{agents.title}}</h2>
       <p class="sub">{{agents.sub}}</p>
+      <ul class="checks"><li>{{agents.p1}}</li><li>{{agents.p2}}</li><li>{{agents.p3}}</li><li>{{agents.p4}}</li><li>{{agents.p5}}</li></ul>
       <p class="quote">{{agents.prompts}}</p>
     </div>
 <pre class="card term reveal"><code><span class="c"># CLI</span>
@@ -131,6 +132,14 @@
     <h2 class="title">{{themes.title}}</h2>
     <p class="sub">{{themes.sub}}</p>
     <div class="reveal">{{themes}}</div>
+  </div>
+</section>
+
+<section class="panel" id="faq">
+  <div class="inner faq">
+    <span class="eyebrow">FAQ</span>
+    <h2 class="title">{{faq.title}}</h2>
+    {{faq}}
   </div>
 </section>
 

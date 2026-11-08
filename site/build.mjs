@@ -54,6 +54,13 @@ const APP = appStrings();
 
 const CLI = JSON.parse(read("site/cli.json"));
 
+/** Agents the app can drive, from the `AgentKind` union in api.ts. */
+const AGENT_NAMES = { claude: "Claude Code", codex: "Codex (ChatGPT)", gemini: "Gemini CLI", opencode: "OpenCode" };
+const AGENTS = [...read("app/src/lib/api.ts").match(/type AgentKind = ([^;]+);/)[1].matchAll(/"(\w+)"/g)].map(([, k]) => {
+  if (!AGENT_NAMES[k]) throw new Error(`unknown agent "${k}": add its display name to AGENT_NAMES in site/build.mjs`);
+  return AGENT_NAMES[k];
+});
+
 /** Keys used with Ctrl/Cmd in the app's components. */
 function shortcutKeys() {
   const keys = new Set();
@@ -130,7 +137,8 @@ function genSettings(lang) {
     [a["settings.font"], `Figtree, Inter, ${a["settings.fontSystem"]}, ${a["settings.fontSerif"]}`, "Figtree"],
     [a["settings.corners"], ["sharp", "soft", "round"].map((r) => a[`settings.${r}`]).join(", "), a[`settings.${DEFAULTS.radius}`]],
     [a["settings.size"].split(" · ")[0], "85% – 120%", `${DEFAULTS.scale * 100}%`],
-    [a["agent.title"], "Claude Code, Codex", DEFAULTS.agent ?? s["docs.firstInstalled"]],
+    [a["agent.title"], AGENTS.join(", "), DEFAULTS.agent ?? s["docs.firstInstalled"]],
+    [a["agent.mode"], ["Ask", "AutoEdit", "ReadOnly"].map((m) => a[`agent.mode${m}`]).join(", "), a[`agent.mode${DEFAULTS.agentMode[0].toUpperCase()}${DEFAULTS.agentMode.slice(1)}`]],
   ];
   return `<div class="table"><table><thead><tr><th>${s["docs.setting"]}</th><th>${s["docs.options"]}</th><th>${s["docs.default"]}</th></tr></thead><tbody>${rows
     .map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join("")}</tr>`)
@@ -218,8 +226,16 @@ function build() {
         body = fill(pages.docs, vars);
       } else {
         vars.themes = genThemes(lang);
+        const faq = Object.keys(strings[lang]).filter((k) => /^faq\.q\d+$/.test(k)).map((k) => [strings[lang][k], strings[lang][k.replace(".q", ".a")]]);
+        vars.faq = faq.map(([q, a], i) => `<details class="qa"${i ? "" : " open"}><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join("");
+        vars.faqLd = `<script type="application/ld+json">${JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: faq.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })),
+        })}</script>`;
         body = fill(pages.landing, vars);
       }
+      vars.faqLd ??= "";
       vars.body = body;
       vars.title = page === "docs" ? `${strings[lang]["nav.docs"]} · dresume` : `dresume · ${strings[lang]["hero.short"]}`;
       vars.page = page;
