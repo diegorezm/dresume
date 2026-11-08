@@ -1,30 +1,40 @@
-<main>
-<section class="hero wrap">
-  <span class="chip accent">{{hero.badge}}</span>
-  <h1>{{hero.title}}</h1>
-  <p class="lead">{{hero.sub}}</p>
-  <div class="actions">
-    <a class="btn primary" href="{{docsUrl}}#get-started">{{hero.start}}</a>
-    <a class="btn" href="https://github.com/diegorezm/dresume">{{hero.github}}</a>
+<main id="top">
+<section class="hero">
+  <div class="glow" aria-hidden="true"></div>
+  <div class="wrap hero-in">
+    <a class="chip accent pill reveal" href="https://github.com/diegorezm/dresume"><span class="pulse"></span>{{hero.badge}}</a>
+    <h1 class="reveal">{{hero.title}}</h1>
+    <p class="lead reveal">{{hero.sub}}</p>
+    <div class="actions reveal">
+      <a class="btn primary" href="{{docsUrl}}#get-started">{{hero.start}} <span aria-hidden="true">→</span></a>
+      <a class="btn" href="https://github.com/diegorezm/dresume">{{hero.github}}</a>
+    </div>
+    <ul class="stats reveal">
+      <li>✓ {{stat1}}</li><li>✓ {{stat2}}</li><li>✓ {{stat3}}</li>
+    </ul>
+    <div class="shot reveal">
+      <div class="shot-bar"><i></i><i></i><i></i><span>dresume</span></div>
+      <img src="{{base}}images/app-resume.png" alt="{{hero.shotAlt}}" width="1600" height="1000">
+    </div>
   </div>
-  <div class="shot card"><img src="{{base}}images/app-resume.png" alt="{{hero.shotAlt}}"></div>
 </section>
 
-<section id="features" class="wrap">
-  <div class="page-head"><h2>{{features.title}}</h2><p>{{features.sub}}</p></div>
+<section id="features" class="wrap sec">
+  <div class="page-head reveal"><span class="eyebrow">{{eyebrow.features}}</span><h2>{{features.title}}</h2><p>{{features.sub}}</p></div>
   <div class="grid">
-    <div class="card feat"><span class="ico">🎨</span><h3>{{f1.t}}</h3><p>{{f1.d}}</p></div>
-    <div class="card feat"><span class="ico">✍️</span><h3>{{f2.t}}</h3><p>{{f2.d}}</p></div>
-    <div class="card feat"><span class="ico">👀</span><h3>{{f3.t}}</h3><p>{{f3.d}}</p></div>
-    <div class="card feat"><span class="ico">🧑‍💻</span><h3>{{f4.t}}</h3><p>{{f4.d}}</p></div>
-    <div class="card feat"><span class="ico">🤖</span><h3>{{f5.t}}</h3><p>{{f5.d}}</p></div>
-    <div class="card feat"><span class="ico">📁</span><h3>{{f6.t}}</h3><p>{{f6.d}}</p></div>
+    <div class="card feat reveal"><span class="ico">🎨</span><h3>{{f1.t}}</h3><p>{{f1.d}}</p></div>
+    <div class="card feat reveal"><span class="ico">✍️</span><h3>{{f2.t}}</h3><p>{{f2.d}}</p></div>
+    <div class="card feat reveal"><span class="ico">👀</span><h3>{{f3.t}}</h3><p>{{f3.d}}</p></div>
+    <div class="card feat reveal"><span class="ico">🧑‍💻</span><h3>{{f4.t}}</h3><p>{{f4.d}}</p></div>
+    <div class="card feat reveal"><span class="ico">🤖</span><h3>{{f5.t}}</h3><p>{{f5.d}}</p></div>
+    <div class="card feat reveal"><span class="ico">📁</span><h3>{{f6.t}}</h3><p>{{f6.d}}</p></div>
   </div>
 </section>
 
-<section class="wrap split">
-  <div>
-    <div class="page-head"><h2>{{how.title}}</h2><p>{{how.sub}}</p></div>
+<section class="band">
+  <div class="wrap sec split">
+    <div class="reveal">
+      <div class="page-head"><span class="eyebrow">{{eyebrow.how}}</span><h2>{{how.title}}</h2><p>{{how.sub}}</p></div>
 <pre class="card tree"><code>my-resumes/
 ├── profile.yaml        <span>← {{how.profile}}</span>
 ├── templates/
@@ -32,39 +42,45 @@
 └── resumes/
     ├── backend-en.yaml <span>← {{how.resume}}</span>
     └── frontend-pt.yaml</code></pre>
+    </div>
+    <img class="how reveal" src="{{base}}images/how-it-works.svg" alt="" loading="lazy">
   </div>
-  <img class="how" src="{{base}}images/how-it-works.svg" alt="">
 </section>
 
-<section class="wrap">
-  <div class="page-head"><h2>{{tour.title}}</h2></div>
+<section class="wrap sec">
+  <div class="page-head reveal"><span class="eyebrow">{{eyebrow.tour}}</span><h2>{{tour.title}}</h2></div>
   <div class="tour">
-    <figure class="card"><img src="{{base}}images/app-home.png" alt="" loading="lazy"><figcaption><b>{{tour.home}}</b> {{tour.homeD}}</figcaption></figure>
-    <figure class="card"><img src="{{base}}images/app-template.png" alt="" loading="lazy"><figcaption><b>{{tour.tpl}}</b> {{tour.tplD}}</figcaption></figure>
-    <figure class="card"><img src="{{base}}images/app-new-template.png" alt="" loading="lazy"><figcaption><b>{{tour.new}}</b> {{tour.newD}}</figcaption></figure>
-    <figure class="card"><img src="{{base}}images/app-settings.png" alt="" loading="lazy"><figcaption><b>{{tour.set}}</b> {{tour.setD}}</figcaption></figure>
+    <figure class="card reveal"><img src="{{base}}images/app-home.png" alt="{{tour.home}}" loading="lazy"><figcaption><b>{{tour.home}}</b> {{tour.homeD}}</figcaption></figure>
+    <figure class="card reveal"><img src="{{base}}images/app-template.png" alt="{{tour.tpl}}" loading="lazy"><figcaption><b>{{tour.tpl}}</b> {{tour.tplD}}</figcaption></figure>
+    <figure class="card reveal"><img src="{{base}}images/app-new-template.png" alt="{{tour.new}}" loading="lazy"><figcaption><b>{{tour.new}}</b> {{tour.newD}}</figcaption></figure>
+    <figure class="card reveal"><img src="{{base}}images/app-settings.png" alt="{{tour.set}}" loading="lazy"><figcaption><b>{{tour.set}}</b> {{tour.setD}}</figcaption></figure>
   </div>
 </section>
 
-<section class="wrap">
-  <div class="page-head"><h2>{{themes.title}}</h2><p>{{themes.sub}}</p></div>
-  {{themes}}
+<section class="wrap sec">
+  <div class="page-head reveal"><span class="eyebrow">{{eyebrow.themes}}</span><h2>{{themes.title}}</h2><p>{{themes.sub}}</p></div>
+  <div class="reveal">{{themes}}</div>
 </section>
 
-<section class="wrap split">
-  <div>
-    <div class="page-head"><h2>{{agents.title}}</h2><p>{{agents.sub}}</p></div>
-    <p class="muted">{{agents.prompts}}</p>
+<section class="band">
+  <div class="wrap sec split">
+    <div class="reveal">
+      <div class="page-head"><span class="eyebrow">{{eyebrow.agents}}</span><h2>{{agents.title}}</h2><p>{{agents.sub}}</p></div>
+      <p class="quote">{{agents.prompts}}</p>
+    </div>
+<pre class="card term reveal"><code><span class="c"># {{nav.docs}} → CLI</span>
+<b>$</b> dresume list --json
+<b>$</b> dresume show backend-en
+<b>$</b> dresume validate --json
+<b>$</b> dresume build backend-en --format svg</code></pre>
   </div>
-<pre class="card"><code>dresume list --json
-dresume show backend-en
-dresume validate --json
-dresume build backend-en --format svg</code></pre>
 </section>
 
-<section class="wrap cta card">
-  <h2>{{cta.title}}</h2>
-  <p>{{cta.sub}}</p>
-  <div class="actions"><a class="btn primary" href="{{docsUrl}}">{{cta.docs}}</a></div>
+<section class="wrap sec">
+  <div class="cta reveal">
+    <h2>{{cta.title}}</h2>
+    <p>{{cta.sub}}</p>
+    <div class="actions"><a class="btn primary" href="{{docsUrl}}">{{cta.docs}} <span aria-hidden="true">→</span></a><a class="btn" href="https://github.com/diegorezm/dresume">{{hero.github}}</a></div>
+  </div>
 </section>
 </main>

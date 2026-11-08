@@ -4,33 +4,55 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{title}}</title>
-<meta name="description" content="{{hero.sub}}">
-<link rel="icon" href="{{base}}icon.svg">
+<meta name="description" content="{{description}}">
+<link rel="canonical" href="{{url}}">
+<link rel="alternate" hreflang="en" href="{{urlEn}}">
+<link rel="alternate" hreflang="pt" href="{{urlPt}}">
+<link rel="alternate" hreflang="x-default" href="{{urlEn}}">
+<meta name="theme-color" content="#f3eee8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#211e1b" media="(prefers-color-scheme: dark)">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="dresume">
+<meta property="og:title" content="{{title}}">
+<meta property="og:description" content="{{description}}">
+<meta property="og:url" content="{{url}}">
+<meta property="og:locale" content="{{ogLocale}}">
+<meta property="og:image" content="{{siteUrl}}images/app-resume.png">
+<meta property="og:image:alt" content="{{hero.shotAlt}}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{title}}">
+<meta name="twitter:description" content="{{description}}">
+<meta name="twitter:image" content="{{siteUrl}}images/app-resume.png">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"dresume","description":"{{hero.sub}}","url":"{{siteUrl}}","applicationCategory":"BusinessApplication","operatingSystem":"Windows, macOS, Linux","license":"https://www.gnu.org/licenses/agpl-3.0.html","softwareVersion":"{{version}}","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"codeRepository":"https://github.com/diegorezm/dresume"}</script>
+<link rel="icon" href="{{base}}icon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400..800&display=swap">
 <link rel="stylesheet" href="{{base}}theme.css">
 <link rel="stylesheet" href="{{base}}style.css">
-<script>try{const t=localStorage.getItem("dresume-theme");if(t)document.documentElement.dataset.theme=t}catch{}</script>
+<script>try{const t=localStorage.getItem("dresume-theme");if(t)document.documentElement.dataset.theme=t}catch{}document.documentElement.classList.add("js")</script>
 </head>
 <body class="page-{{page}}">
 <header class="nav">
   <div class="wrap nav-in">
-    <a class="brand" href="{{home}}"><img src="{{base}}icon.svg" alt="" width="26" height="26">dresume</a>
+    <a class="brand" href="{{home}}"><img src="{{base}}icon.svg" alt="" width="28" height="28">dresume</a>
+    <button class="menu-btn" aria-label="{{menu}}" aria-expanded="false"><span></span><span></span></button>
     <nav>
       <a href="{{home}}#features">{{nav.features}}</a>
-      <a href="{{docsUrl}}">{{nav.docs}}</a>
-      <a href="https://github.com/diegorezm/dresume">GitHub</a>
-      <a class="chip" href="{{otherLang}}" hreflang="{{nav.otherLangCode}}">{{nav.otherLang}}</a>
+      <a href="{{docsUrl}}"{{navDocs}}>{{nav.docs}}</a>
+      <a href="https://github.com/diegorezm/dresume" class="gh"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a>
+      <a class="chip lang" href="{{otherLang}}" hreflang="{{nav.otherLangCode}}">{{nav.otherLang}}</a>
     </nav>
   </div>
 </header>
 {{body}}
 <footer class="foot">
   <div class="wrap foot-in">
-    <span>dresume v{{version}} · AGPL-3.0-or-later</span>
-    <span>{{foot.made}} <a href="https://typst.app/">Typst</a></span>
+    <a class="brand small" href="{{home}}"><img src="{{base}}icon.svg" alt="" width="20" height="20">dresume</a>
+    <span>v{{version}} · AGPL-3.0-or-later · {{foot.made}} <a href="https://typst.app/">Typst</a></span>
+    <a href="#top" class="muted">{{backTop}} ↑</a>
   </div>
 </footer>
-<script src="{{base}}site.js"></script>
+<script src="{{base}}site.js" defer></script>
 </body>
 </html>

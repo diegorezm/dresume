@@ -60,7 +60,22 @@
     "shortcut.s": "Save the open resume or template",
     "shortcut.\\": "Toggle the preview (editor / split / preview)",
     "shortcut.b": "Toggle the sidebar",
-    "shortcut.j": "Toggle the AI agent panel"
+    "shortcut.j": "Toggle the AI agent panel",
+    "meta.docs": "dresume documentation: install the app, the workspace format, settings, themes, writing Typst templates and the CLI reference.",
+    "eyebrow.features": "Features",
+    "eyebrow.how": "Workflow",
+    "eyebrow.tour": "Tour",
+    "eyebrow.themes": "Themes",
+    "eyebrow.agents": "Agents",
+    "copy": "Copy",
+    "copied": "Copied",
+    "menu": "Menu",
+    "stat1": "Typst built in",
+    "stat2": "Plain files",
+    "stat3": "No account",
+    "onThisPage": "On this page",
+    "editPage": "Edit this page on GitHub",
+    "backTop": "Back to top"
   },
   "pt": {
     "nav.features": "Recursos",
@@ -123,6 +138,21 @@
     "shortcut.s": "Salvar o currículo ou template aberto",
     "shortcut.\\": "Alternar a pré-visualização (editor / dividido / pré-visualização)",
     "shortcut.b": "Mostrar/ocultar a barra lateral",
-    "shortcut.j": "Mostrar/ocultar o painel do agente de IA"
+    "shortcut.j": "Mostrar/ocultar o painel do agente de IA",
+    "meta.docs": "Documentação do dresume: instalação, formato do workspace, ajustes, temas, criação de templates Typst e referência da CLI.",
+    "eyebrow.features": "Recursos",
+    "eyebrow.how": "Fluxo",
+    "eyebrow.tour": "Tour",
+    "eyebrow.themes": "Temas",
+    "eyebrow.agents": "Agentes",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "menu": "Menu",
+    "stat1": "Typst embutido",
+    "stat2": "Arquivos simples",
+    "stat3": "Sem conta",
+    "onThisPage": "Nesta página",
+    "editPage": "Editar esta página no GitHub",
+    "backTop": "Voltar ao topo"
   }
 }

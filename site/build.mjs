@@ -11,6 +11,8 @@ const out = path.join(site, "dist");
 const read = (p) => fs.readFileSync(path.join(root, p), "utf8").replace(/\r/g, "");
 
 const LANGS = ["en", "pt"];
+const SITE_URL = "https://diegorezm.github.io/dresume/";
+const pagePath = (lang, page) => `${lang === "en" ? "" : `${lang}/`}${page === "docs" ? "docs/" : ""}`;
 const strings = JSON.parse(read("site/i18n.json"));
 
 // ---------- extract data from the sources ----------
@@ -275,6 +277,13 @@ function build() {
         docsUrl: `${base}${dir}docs/`,
         otherLang: `${base}${lang === "en" ? "pt/" : ""}${page === "docs" ? "docs/" : ""}`,
         version: JSON.parse(read("app/package.json")).version,
+        url: SITE_URL + pagePath(lang, page),
+        urlEn: SITE_URL + pagePath("en", page),
+        urlPt: SITE_URL + pagePath("pt", page),
+        siteUrl: SITE_URL,
+        ogLocale: lang === "en" ? "en_US" : "pt_BR",
+        description: strings[lang][page === "docs" ? "meta.docs" : "hero.sub"],
+        navDocs: page === "docs" ? ' aria-current="page"' : "",
       };
       let body;
       if (page === "docs") {
@@ -301,6 +310,22 @@ function build() {
   fs.cpSync(path.join(root, "docs/images"), path.join(out, "images"), { recursive: true });
   fs.copyFileSync(path.join(root, "assets/icon.svg"), path.join(out, "icon.svg"));
   fs.writeFileSync(path.join(out, ".nojekyll"), "");
+  const today = new Date().toISOString().slice(0, 10);
+  const urls = LANGS.flatMap((l) => ["landing", "docs"].map((p) => [l, p]));
+  fs.writeFileSync(
+    path.join(out, "sitemap.xml"),
+    `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+${urls
+      .map(([l, p]) => `<url><loc>${SITE_URL}${pagePath(l, p)}</loc><lastmod>${today}</lastmod>${LANGS.map((o) => `<xhtml:link rel="alternate" hreflang="${o}" href="${SITE_URL}${pagePath(o, p)}"/>`).join("")}</url>`)
+      .join("\n")}
+</urlset>
+`,
+  );
+  fs.writeFileSync(path.join(out, "robots.txt"), `User-agent: *
+Allow: /
+Sitemap: ${SITE_URL}sitemap.xml
+`);
   console.log(`site built: ${path.relative(root, out)} (${CLI.length} commands, ${THEMES.length} themes)`);
 }
 
