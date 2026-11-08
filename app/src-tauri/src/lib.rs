@@ -312,6 +312,7 @@ pub fn run() {
             open_themes_dir,
             highlight_typst,
             agent::list_agents,
+            agent::agent_models,
             agent::agent_start,
             agent::agent_send,
             agent::agent_respond,

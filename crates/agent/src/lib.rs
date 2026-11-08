@@ -84,6 +84,36 @@ pub async fn detect() -> Vec<AgentInfo> {
     out
 }
 
+/// A model an agent can run, with the reasoning efforts it accepts (empty: no effort control).
+#[derive(Clone, Debug, Serialize)]
+pub struct ModelOption {
+    pub id: String,
+    pub name: String,
+    pub efforts: Vec<String>,
+    pub default_effort: Option<String>,
+}
+
+/// Models offered for an agent. Claude takes stable aliases; Codex is asked through its
+/// app-server; ACP agents don't advertise models up front, so they use their own default.
+pub async fn models(kind: AgentKind) -> Vec<ModelOption> {
+    match kind {
+        AgentKind::Claude => {
+            let efforts: Vec<String> = ["low", "medium", "high", "xhigh", "max"].map(String::from).into();
+            [("opus", "Opus"), ("sonnet", "Sonnet"), ("haiku", "Haiku"), ("fable", "Fable")]
+                .into_iter()
+                .map(|(id, name)| ModelOption {
+                    id: id.into(),
+                    name: name.into(),
+                    efforts: efforts.clone(),
+                    default_effort: None,
+                })
+                .collect()
+        }
+        AgentKind::Codex => codex::models().await.unwrap_or_default(),
+        AgentKind::Gemini | AgentKind::OpenCode => vec![],
+    }
+}
+
 /// How much the agent may do without asking.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -105,6 +135,8 @@ pub struct SessionOptions {
     pub instructions: String,
     pub mode: PermissionMode,
     pub model: Option<String>,
+    /// Reasoning effort, one of the model's `efforts`; `None` keeps the agent's default.
+    pub effort: Option<String>,
     /// An MCP server to give the agent (dresume's own `dresume mcp`), when available.
     pub mcp: Option<McpServer>,
 }

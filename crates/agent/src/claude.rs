@@ -32,9 +32,18 @@ pub(crate) async fn run(opts: SessionOptions, sink: EventSink, mut rx: mpsc::Unb
         "--permission-prompt-tool", "stdio",
         "--permission-mode", mode,
         "--append-system-prompt-file", &prompt_path,
+        // Token diet: only the tools a resume needs, no user plugins/hooks/skills, and no MCP
+        // servers besides dresume's own (each one adds its tool definitions to every request).
+        "--tools", "Read,Edit,Write,Glob,Grep,Bash",
+        "--setting-sources", "",
+        "--disable-slash-commands",
+        "--strict-mcp-config",
     ];
     if let Some(model) = &opts.model {
         args.extend(["--model", model]);
+    }
+    if let Some(effort) = &opts.effort {
+        args.extend(["--effort", effort]);
     }
     let mcp_file = match &opts.mcp {
         Some(server) => {
@@ -215,7 +224,7 @@ mod tests {
     use std::sync::{Arc, Mutex};
 
     fn state_with(mode: PermissionMode) -> (SessionOptions, Arc<Mutex<Vec<AgentEvent>>>, EventSink) {
-        let opts = SessionOptions { cwd: std::env::temp_dir(), instructions: String::new(), mode, model: None, mcp: None };
+        let opts = SessionOptions { cwd: std::env::temp_dir(), instructions: String::new(), mode, model: None, effort: None, mcp: None };
         let events = Arc::new(Mutex::new(Vec::new()));
         let log = events.clone();
         let sink: EventSink = Arc::new(move |e| log.lock().unwrap().push(e));

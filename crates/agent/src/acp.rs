@@ -276,7 +276,7 @@ mod tests {
     use std::sync::{Arc, Mutex};
 
     fn harness(mode: PermissionMode) -> (SessionOptions, Arc<Mutex<Vec<AgentEvent>>>, EventSink) {
-        let opts = SessionOptions { cwd: std::env::temp_dir(), instructions: "rules\n".into(), mode, model: None, mcp: None };
+        let opts = SessionOptions { cwd: std::env::temp_dir(), instructions: "rules\n".into(), mode, model: None, effort: None, mcp: None };
         let events = Arc::new(Mutex::new(Vec::new()));
         let log = events.clone();
         (opts, events, Arc::new(move |e| log.lock().unwrap().push(e)))

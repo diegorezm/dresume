@@ -277,7 +277,10 @@ impl<'a> State<'a> {
         }
         let text = self.queue.pop_front()?;
         self.busy = true;
-        let params = json!({ "threadId": thread, "input": [{ "type": "text", "text": text, "text_elements": [] }] });
+        let mut params = json!({ "threadId": thread, "input": [{ "type": "text", "text": text, "text_elements": [] }] });
+        if let Some(effort) = &self.opts.effort {
+            params["effort"] = json!(effort);
+        }
         Some(self.rpc.request(Purpose::StartTurn, "turn/start", params))
     }
 }
@@ -293,6 +296,41 @@ fn unwrap_shell(command: &str) -> String {
         }
     }
     command.to_string()
+}
+
+/// Models from a short-lived app-server (`model/list`); no turn runs, so no tokens are spent.
+pub(crate) async fn models() -> Result<Vec<crate::ModelOption>> {
+    let mut proc = process::spawn("codex", &["app-server"], &std::env::temp_dir())?;
+    let init = json!({ "clientInfo": { "name": "dresume", "version": env!("CARGO_PKG_VERSION") } });
+    proc.write(&json!({ "jsonrpc": "2.0", "id": 1, "method": "initialize", "params": init })).await?;
+    proc.write(&rpc::notification("initialized", json!({}))).await?;
+    proc.write(&json!({ "jsonrpc": "2.0", "id": 2, "method": "model/list", "params": {} })).await?;
+    let read = async {
+        while let Some(line) = proc.lines.next_line().await? {
+            if let Some(Message::Response { id: 2, result }) = rpc::parse(&line) {
+                return result.map_err(anyhow::Error::msg);
+            }
+        }
+        bail!("codex exited before listing models")
+    };
+    let result = tokio::time::timeout(std::time::Duration::from_secs(20), read).await??;
+    Ok(result["data"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter(|m| !m["hidden"].as_bool().unwrap_or(false))
+        .map(|m| crate::ModelOption {
+            id: m["model"].as_str().or(m["id"].as_str()).unwrap_or_default().into(),
+            name: m["displayName"].as_str().or(m["model"].as_str()).unwrap_or_default().into(),
+            efforts: m["supportedReasoningEfforts"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter_map(|e| e["reasoningEffort"].as_str().map(String::from))
+                .collect(),
+            default_effort: m["defaultReasoningEffort"].as_str().map(Into::into),
+        })
+        .collect())
 }
 
 /// How an approval request is answered.
@@ -324,7 +362,7 @@ mod tests {
     use std::sync::{Arc, Mutex};
 
     fn harness(mode: PermissionMode) -> (SessionOptions, Arc<Mutex<Vec<AgentEvent>>>, EventSink) {
-        let opts = SessionOptions { cwd: std::env::temp_dir(), instructions: "x".into(), mode, model: None, mcp: None };
+        let opts = SessionOptions { cwd: std::env::temp_dir(), instructions: "x".into(), mode, model: None, effort: None, mcp: None };
         let events = Arc::new(Mutex::new(Vec::new()));
         let log = events.clone();
         (opts, events, Arc::new(move |e| log.lock().unwrap().push(e)))

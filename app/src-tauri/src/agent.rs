@@ -8,7 +8,8 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
 use dresume_agent::{
-    AgentEvent, AgentInfo, AgentKind, FileChange, McpServer, PermissionMode, Session, SessionOptions, Snapshot,
+    AgentEvent, AgentInfo, AgentKind, FileChange, McpServer, ModelOption, PermissionMode, Session, SessionOptions,
+    Snapshot,
 };
 use serde_json::Value;
 use tauri::ipc::Channel;
@@ -43,20 +44,28 @@ pub async fn list_agents() -> Vec<AgentInfo> {
 
 /// Starts an agent in the workspace root. Events stream through `on_event` until `Exited`.
 #[tauri::command]
+pub async fn agent_models(kind: AgentKind) -> Vec<ModelOption> {
+    dresume_agent::models(kind).await
+}
+
+#[tauri::command]
+#[allow(clippy::too_many_arguments)]
 pub async fn agent_start(
     state: State<'_, AppState>,
     agents: State<'_, AgentState>,
     kind: AgentKind,
     mode: PermissionMode,
+    model: Option<String>,
+    effort: Option<String>,
     resume: Option<String>,
     on_event: Channel<AgentEvent>,
 ) -> CmdResult<u32> {
-    let (cwd, instructions) = with_ws(&state, |ws| {
+    let (cwd, template) = with_ws(&state, |ws| {
         let template = match &resume {
             Some(id) => Some(ws.resume_info(id)?.template),
             None => None,
         };
-        Ok((ws.root().to_path_buf(), instructions(ws.root(), resume.as_deref(), template.as_deref())))
+        Ok((ws.root().to_path_buf(), template))
     })?;
     // With the dresume CLI installed, the agent also gets its MCP tools (validate, build, …).
     let mcp = dresume_agent::find_program("dresume").map(|command| McpServer {
@@ -64,7 +73,8 @@ pub async fn agent_start(
         command,
         args: vec!["-w".into(), cwd.to_string_lossy().into_owned(), "mcp".into()],
     });
-    let opts = SessionOptions { cwd: cwd.clone(), instructions, mode, model: None, mcp };
+    let instructions = instructions(resume.as_deref(), template.as_deref(), mcp.is_some());
+    let opts = SessionOptions { cwd: cwd.clone(), instructions, mode, model, effort, mcp };
     let session = dresume_agent::start(kind, opts, Arc::new(move |e| {
         let _ = on_event.send(e);
     }));
@@ -125,23 +135,24 @@ pub fn agent_stop(agents: State<AgentState>, id: u32) {
     agents.sessions.lock().unwrap().remove(&id);
 }
 
-/// What the agent is told about dresume and about what the user has open.
-fn instructions(root: &Path, resume: Option<&str>, template: Option<&str>) -> String {
-    let mut text = format!(
-        "You are running inside dresume, a resume manager built on Typst. The current directory \
-         ({}) is a dresume workspace: read AGENTS.md first, it explains the file layout and rules.\n\
-         - Resume content lives in resumes/<id>.yaml and must match templates/<template>/schema.json.\n\
-         - Edit the files directly; the app's live preview reloads when they change.\n\
-         - If the `dresume` CLI is installed, check your work with `dresume validate <id>` and `dresume build <id>`.\n\
-         - Keep the user's facts: never invent experience, dates, employers or numbers.\n",
-        root.display()
+/// Kept short on purpose: it rides along with every request. It gives the agent the paths it
+/// needs up front so it doesn't spend turns exploring, and points to AGENTS.md only when needed.
+fn instructions(resume: Option<&str>, template: Option<&str>, mcp: bool) -> String {
+    let mut text = String::from(
+        "dresume workspace (Typst resumes). Content: resumes/<id>.yaml, valid per          templates/<template>/schema.json. Contacts: profile.yaml. Edit files directly; the app          previews live. Details in AGENTS.md, read only if needed. Never invent facts. Reply briefly.
+",
     );
     if let (Some(id), Some(template)) = (resume, template) {
-        text.push_str(&format!(
-            "\nThe user has resumes/{id}.yaml open (template `{template}`). Unless they say otherwise, \
-             their requests are about that resume.\n"
-        ));
+        text.push_str(&format!("Open: resumes/{id}.yaml (template {template}).
+"));
     }
+    text.push_str(if mcp {
+        "Check edits with the dresume MCP tool `validate`.
+"
+    } else {
+        "Check edits with `dresume validate` if available.
+"
+    });
     text
 }
 

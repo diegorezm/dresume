@@ -1,6 +1,7 @@
 //! Manual check against a real agent: `cargo run -p dresume-agent --example chat -- claude <dir> "<prompt>"`.
 //! `acp:<program> [args…]` (one argument, space separated) runs any ACP agent instead.
 //! With `DRESUME_BIN=<path to dresume>`, the agent also gets `dresume mcp` for `<dir>`.
+//! `DRESUME_MODEL` / `DRESUME_EFFORT` pick the model and reasoning effort.
 //! Approves every permission request and exits when the first turn ends.
 
 use std::sync::Arc;
@@ -29,7 +30,8 @@ async fn main() {
         cwd,
         instructions: "Be brief.".into(),
         mode: PermissionMode::Ask,
-        model: None,
+        model: std::env::var("DRESUME_MODEL").ok(),
+        effort: std::env::var("DRESUME_EFFORT").ok(),
         mcp,
     };
     let sink: dresume_agent::EventSink = Arc::new(move |e| {
