@@ -61,8 +61,8 @@ struct State<'a> {
     busy: bool,
     /// Prompts sent before the thread exists or while a turn runs.
     queue: VecDeque<String>,
-    /// Unanswered approvals: UI id → (JSON-RPC id, whether it uses the legacy decision names).
-    pending: HashMap<String, (Value, bool)>,
+    /// Unanswered approvals: UI id → (JSON-RPC id, how to answer).
+    pending: HashMap<String, (Value, Reply)>,
     /// Diffs of file-change items, shown when Codex asks to apply them.
     diffs: HashMap<String, String>,
     /// Last agent message that produced text, to separate consecutive messages.
@@ -105,6 +105,10 @@ impl<'a> State<'a> {
                     });
                     if let Some(model) = &self.opts.model {
                         params["model"] = json!(model);
+                    }
+                    if let Some(server) = &self.opts.mcp {
+                        let entry = json!({ "command": server.command, "args": server.args });
+                        params["config"] = json!({ "mcp_servers": { &server.name: entry } });
                     }
                     out.push(self.rpc.request(Purpose::StartThread, "thread/start", params));
                 }
@@ -202,31 +206,41 @@ impl<'a> State<'a> {
 
     fn request(&mut self, id: Value, method: &str, params: &Value) -> Option<Value> {
         let cwd = &self.opts.cwd;
-        let (title, detail, legacy) = match method {
+        let (title, detail, kind) = match method {
             "item/fileChange/requestApproval" => {
                 let item = params["itemId"].as_str().unwrap_or_default();
-                ("Edit files".to_string(), self.diffs.get(item).cloned(), false)
+                ("Edit files".to_string(), self.diffs.get(item).cloned(), Reply::Decision)
             }
             "item/commandExecution/requestApproval" => {
                 let command = unwrap_shell(params["command"].as_str().unwrap_or("a command"));
-                (format!("Run {}", relative(&command, cwd)), Some(command), false)
+                (format!("Run {}", relative(&command, cwd)), Some(command), Reply::Decision)
             }
-            "applyPatchApproval" => ("Edit files".to_string(), None, true),
+            "applyPatchApproval" => ("Edit files".to_string(), None, Reply::Legacy),
             "execCommandApproval" => {
                 let command = params["command"].as_array().map(|parts| {
                     parts.iter().filter_map(Value::as_str).collect::<Vec<_>>().join(" ")
                 });
                 let command = command.unwrap_or_else(|| "a command".into());
-                (format!("Run {}", relative(&command, cwd)), Some(command), true)
+                (format!("Run {}", relative(&command, cwd)), Some(command), Reply::Legacy)
             }
-            // Questions to the user, MCP elicitations, auth refreshes: not supported here.
+            // Codex asks before MCP tool calls through a form elicitation. dresume's own server
+            // (validate, build, …) only reads the workspace or writes output/, so it's approved.
+            "mcpServer/elicitation/request" if params["mode"] == "form" => {
+                let message = params["message"].as_str().unwrap_or("Use an MCP tool").to_string();
+                let ours = self.opts.mcp.as_ref().is_some_and(|s| params["serverName"] == s.name.as_str() || message.contains(&s.name));
+                if ours {
+                    return Some(reply(&id, true, Reply::Elicitation));
+                }
+                (message, None, Reply::Elicitation)
+            }
+            // Questions to the user, URL elicitations, auth refreshes: not supported here.
             _ => return Some(rpc::error(&id, -32601, "not supported by dresume")),
         };
         if self.opts.mode == PermissionMode::ReadOnly {
-            return Some(rpc::response(&id, json!({ "decision": decision(false, legacy) })));
+            return Some(reply(&id, false, kind));
         }
         let key = rpc::id_key(&id);
-        self.pending.insert(key.clone(), (id, legacy));
+        self.pending.insert(key.clone(), (id, kind));
         let detail = detail.or_else(|| params["reason"].as_str().map(Into::into));
         (self.sink)(AgentEvent::Permission { id: key, title, detail });
         None
@@ -239,7 +253,7 @@ impl<'a> State<'a> {
                 self.next_turn().into_iter().collect()
             }
             Input::Permission { id, allow } => match self.pending.remove(&id) {
-                Some((rpc_id, legacy)) => vec![rpc::response(&rpc_id, json!({ "decision": decision(allow, legacy) }))],
+                Some((rpc_id, kind)) => vec![reply(&rpc_id, allow, kind)],
                 None => vec![],
             },
             Input::Cancel => {
@@ -281,14 +295,27 @@ fn unwrap_shell(command: &str) -> String {
     command.to_string()
 }
 
-/// Current protocol: accept/decline. Legacy (`applyPatchApproval`, `execCommandApproval`): approved/denied.
-fn decision(allow: bool, legacy: bool) -> &'static str {
-    match (allow, legacy) {
-        (true, false) => "accept",
-        (false, false) => "decline",
-        (true, true) => "approved",
-        (false, true) => "denied",
-    }
+/// How an approval request is answered.
+#[derive(Clone, Copy)]
+enum Reply {
+    /// `{ decision: accept | decline }`
+    Decision,
+    /// `applyPatchApproval` / `execCommandApproval`: `{ decision: approved | denied }`
+    Legacy,
+    /// MCP form elicitation: `{ action: accept | decline, content }`
+    Elicitation,
+}
+
+fn reply(id: &Value, allow: bool, kind: Reply) -> Value {
+    let result = match (kind, allow) {
+        (Reply::Decision, true) => json!({ "decision": "accept" }),
+        (Reply::Decision, false) => json!({ "decision": "decline" }),
+        (Reply::Legacy, true) => json!({ "decision": "approved" }),
+        (Reply::Legacy, false) => json!({ "decision": "denied" }),
+        (Reply::Elicitation, true) => json!({ "action": "accept", "content": {} }),
+        (Reply::Elicitation, false) => json!({ "action": "decline", "content": null }),
+    };
+    rpc::response(id, result)
 }
 
 #[cfg(test)]
@@ -297,7 +324,7 @@ mod tests {
     use std::sync::{Arc, Mutex};
 
     fn harness(mode: PermissionMode) -> (SessionOptions, Arc<Mutex<Vec<AgentEvent>>>, EventSink) {
-        let opts = SessionOptions { cwd: std::env::temp_dir(), instructions: "x".into(), mode, model: None };
+        let opts = SessionOptions { cwd: std::env::temp_dir(), instructions: "x".into(), mode, model: None, mcp: None };
         let events = Arc::new(Mutex::new(Vec::new()));
         let log = events.clone();
         (opts, events, Arc::new(move |e| log.lock().unwrap().push(e)))

@@ -1,5 +1,6 @@
 //! Manual check against a real agent: `cargo run -p dresume-agent --example chat -- claude <dir> "<prompt>"`.
 //! `acp:<program> [args…]` (one argument, space separated) runs any ACP agent instead.
+//! With `DRESUME_BIN=<path to dresume>`, the agent also gets `dresume mcp` for `<dir>`.
 //! Approves every permission request and exits when the first turn ends.
 
 use std::sync::Arc;
@@ -18,11 +19,18 @@ async fn main() {
         eprintln!("{:?}: {:?} {:?}", info.kind, info.path, info.version);
     }
     let (tx, mut rx) = mpsc::unbounded_channel();
+    let cwd = std::fs::canonicalize(dir).unwrap();
+    let mcp = std::env::var_os("DRESUME_BIN").map(|bin| dresume_agent::McpServer {
+        name: "dresume".into(),
+        command: bin.into(),
+        args: vec!["-w".into(), cwd.to_string_lossy().into_owned(), "mcp".into()],
+    });
     let opts = SessionOptions {
-        cwd: std::fs::canonicalize(dir).unwrap(),
+        cwd,
         instructions: "Be brief.".into(),
         mode: PermissionMode::Ask,
         model: None,
+        mcp,
     };
     let sink: dresume_agent::EventSink = Arc::new(move |e| {
         let _ = tx.send(e);

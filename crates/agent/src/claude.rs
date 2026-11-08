@@ -17,7 +17,7 @@ use crate::{AgentEvent, EventSink, Input, PermissionMode, SessionOptions, ToolSt
 
 pub(crate) async fn run(opts: SessionOptions, sink: EventSink, mut rx: mpsc::UnboundedReceiver<Input>) -> Result<()> {
     // The instructions go through a file: arguments can't carry long text through `.cmd` shims.
-    let prompt_file = PromptFile::write(&opts.instructions)?;
+    let prompt_file = TempFile::write("md", &opts.instructions)?;
     let mode = match opts.mode {
         PermissionMode::AutoEdit => "acceptEdits",
         PermissionMode::Ask | PermissionMode::ReadOnly => "default",
@@ -35,6 +35,19 @@ pub(crate) async fn run(opts: SessionOptions, sink: EventSink, mut rx: mpsc::Unb
     ];
     if let Some(model) = &opts.model {
         args.extend(["--model", model]);
+    }
+    let mcp_file = match &opts.mcp {
+        Some(server) => {
+            let config = json!({ "mcpServers": { &server.name: { "command": server.command, "args": server.args } } });
+            Some(TempFile::write("json", &config.to_string())?)
+        }
+        None => None,
+    };
+    let mcp_path = mcp_file.as_ref().map(|f| f.0.to_string_lossy().into_owned());
+    // dresume's own tools only read the workspace or write output/: no need to ask for them.
+    let mcp_allowed = opts.mcp.as_ref().map(|s| format!("mcp__{}", s.name));
+    if let (Some(path), Some(allowed)) = (&mcp_path, &mcp_allowed) {
+        args.extend(["--mcp-config", path, "--allowedTools", allowed]);
     }
     let mut proc = process::spawn("claude", &args, &opts.cwd)?;
     sink(AgentEvent::Ready);
@@ -178,19 +191,19 @@ fn edit_detail(input: &Value) -> Option<String> {
 }
 
 /// A temp file removed when dropped.
-struct PromptFile(std::path::PathBuf);
+struct TempFile(std::path::PathBuf);
 
-impl PromptFile {
-    fn write(text: &str) -> Result<Self> {
+impl TempFile {
+    fn write(ext: &str, text: &str) -> Result<Self> {
         static NEXT: AtomicU64 = AtomicU64::new(1);
         let n = NEXT.fetch_add(1, Ordering::Relaxed);
-        let path = std::env::temp_dir().join(format!("dresume-agent-{}-{n}.md", std::process::id()));
+        let path = std::env::temp_dir().join(format!("dresume-agent-{}-{n}.{ext}", std::process::id()));
         std::fs::write(&path, text)?;
         Ok(Self(path))
     }
 }
 
-impl Drop for PromptFile {
+impl Drop for TempFile {
     fn drop(&mut self) {
         let _ = std::fs::remove_file(&self.0);
     }
@@ -202,7 +215,7 @@ mod tests {
     use std::sync::{Arc, Mutex};
 
     fn state_with(mode: PermissionMode) -> (SessionOptions, Arc<Mutex<Vec<AgentEvent>>>, EventSink) {
-        let opts = SessionOptions { cwd: std::env::temp_dir(), instructions: String::new(), mode, model: None };
+        let opts = SessionOptions { cwd: std::env::temp_dir(), instructions: String::new(), mode, model: None, mcp: None };
         let events = Arc::new(Mutex::new(Vec::new()));
         let log = events.clone();
         let sink: EventSink = Arc::new(move |e| log.lock().unwrap().push(e));

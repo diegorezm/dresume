@@ -106,7 +106,10 @@ impl<'a> State<'a> {
         match msg {
             Message::Response { id, result } => match (self.rpc.take(id), result) {
                 (Some(Purpose::Initialize), Ok(_)) => {
-                    let params = json!({ "cwd": self.opts.cwd, "mcpServers": [] });
+                    let servers: Vec<Value> = self.opts.mcp.iter().map(|s| {
+                        json!({ "name": s.name, "command": s.command, "args": s.args, "env": [] })
+                    }).collect();
+                    let params = json!({ "cwd": self.opts.cwd, "mcpServers": servers });
                     out.push(self.rpc.request(Purpose::NewSession, "session/new", params));
                 }
                 (Some(Purpose::NewSession), Ok(result)) => {
@@ -273,7 +276,7 @@ mod tests {
     use std::sync::{Arc, Mutex};
 
     fn harness(mode: PermissionMode) -> (SessionOptions, Arc<Mutex<Vec<AgentEvent>>>, EventSink) {
-        let opts = SessionOptions { cwd: std::env::temp_dir(), instructions: "rules\n".into(), mode, model: None };
+        let opts = SessionOptions { cwd: std::env::temp_dir(), instructions: "rules\n".into(), mode, model: None, mcp: None };
         let events = Arc::new(Mutex::new(Vec::new()));
         let log = events.clone();
         (opts, events, Arc::new(move |e| log.lock().unwrap().push(e)))

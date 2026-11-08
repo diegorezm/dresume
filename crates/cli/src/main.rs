@@ -1,3 +1,5 @@
+mod mcp;
+
 use std::fs;
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -73,6 +75,8 @@ enum Command {
     },
     /// Print a template's JSON Schema.
     Schema { template: String },
+    /// Serve the workspace as an MCP server over stdio (tools: list, schema, show, validate, build, preview_template).
+    Mcp,
 }
 
 fn main() -> ExitCode {
@@ -244,6 +248,12 @@ fn run(cli: &Cli) -> Result<bool> {
                     println!("{} ({}): hides {hidden}", t.name, t.id);
                 }
             });
+            Ok(true)
+        }
+        Command::Mcp => {
+            let start = cli.workspace.clone().unwrap_or_else(|| PathBuf::from("."));
+            Workspace::discover(&start)?;
+            mcp::serve(&start)?;
             Ok(true)
         }
         Command::Schema { template } => {

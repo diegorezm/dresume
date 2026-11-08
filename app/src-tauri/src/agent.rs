@@ -7,7 +7,9 @@ use std::hash::{Hash, Hasher};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
-use dresume_agent::{AgentEvent, AgentInfo, AgentKind, FileChange, PermissionMode, Session, SessionOptions, Snapshot};
+use dresume_agent::{
+    AgentEvent, AgentInfo, AgentKind, FileChange, McpServer, PermissionMode, Session, SessionOptions, Snapshot,
+};
 use serde_json::Value;
 use tauri::ipc::Channel;
 use tauri::{AppHandle, State};
@@ -56,7 +58,13 @@ pub async fn agent_start(
         };
         Ok((ws.root().to_path_buf(), instructions(ws.root(), resume.as_deref(), template.as_deref())))
     })?;
-    let opts = SessionOptions { cwd: cwd.clone(), instructions, mode, model: None };
+    // With the dresume CLI installed, the agent also gets its MCP tools (validate, build, …).
+    let mcp = dresume_agent::find_program("dresume").map(|command| McpServer {
+        name: "dresume".into(),
+        command,
+        args: vec!["-w".into(), cwd.to_string_lossy().into_owned(), "mcp".into()],
+    });
+    let opts = SessionOptions { cwd: cwd.clone(), instructions, mode, model: None, mcp };
     let session = dresume_agent::start(kind, opts, Arc::new(move |e| {
         let _ = on_event.send(e);
     }));

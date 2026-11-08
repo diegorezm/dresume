@@ -105,6 +105,21 @@ pub struct SessionOptions {
     pub instructions: String,
     pub mode: PermissionMode,
     pub model: Option<String>,
+    /// An MCP server to give the agent (dresume's own `dresume mcp`), when available.
+    pub mcp: Option<McpServer>,
+}
+
+/// A stdio MCP server, passed to each agent in its own config format.
+#[derive(Clone, Debug)]
+pub struct McpServer {
+    pub name: String,
+    pub command: PathBuf,
+    pub args: Vec<String>,
+}
+
+/// Full path of a program on `PATH`.
+pub fn find_program(name: &str) -> Option<PathBuf> {
+    which::which(name).ok()
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
