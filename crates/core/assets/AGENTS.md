@@ -9,7 +9,7 @@ Everything is plain files; edit them directly or use the `dresume` CLI.
 dresume.yaml            workspace marker (name, version)
 profile.yaml            personal info shared by every resume (name, email, links…)
 templates/<id>/
-  template.yaml         display name + description
+  template.yaml         display name, description, `profile.hide` (profile keys this template leaves out)
   template.typ          Typst layout
   schema.json           JSON Schema the resume content must satisfy
   sample.yaml           sample content used to preview the template
@@ -35,6 +35,11 @@ Templates get their data through two inputs holding workspace-rooted paths:
 #let resume  = yaml(sys.inputs.resume)
 ```
 
+The profile templates receive is normalized: a link may be written in profile.yaml as a plain URL
+(`website: https://you.dev`) or as `{label, url}`, and templates always get `{label, url}`. Fields listed in
+the template's `profile.hide` are removed. Templates should render contact fields generically (iterate the
+profile and skip what they show elsewhere) so new or hidden fields never break them.
+
 When you add a field to a template, also add it to `schema.json` and `sample.yaml`.
 These schema keywords drive the app's form editor: `title` (label), `format: "textarea"` (multi-line text), `enum` (select),
 `format: "tags"` on a string array (chips instead of bullets), `items.title` (singular name, e.g. "Add position").
@@ -54,6 +59,7 @@ dresume preview-template <template>         # compile a template with its sample
 dresume new <id> --template <template>      # new resume from the template's sample
 dresume duplicate <id> --from <resume>      # new resume with a copy of another one
 dresume new-template <id> --name <name> [--from <template>|@starter]
+dresume profile-fields [<template> --hide phone,github]   # which profile fields each template shows
 ```
 
 Typical loop: edit YAML → `dresume validate --json` → `dresume build <id> --json` → fix the reported diagnostics.

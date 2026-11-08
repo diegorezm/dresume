@@ -6,7 +6,7 @@
 //! dresume.yaml              workspace marker
 //! profile.yaml              personal info shared by every resume
 //! templates/<id>/
-//!   template.yaml           name + description
+//!   template.yaml           name, description, `profile.hide` (profile keys to leave out)
 //!   template.typ            layout
 //!   schema.json             JSON Schema for resume content
 //!   sample.yaml             sample content used to preview the template
@@ -19,11 +19,13 @@
 
 mod compile;
 mod highlight;
+mod profile;
 mod world;
 mod workspace;
 
 pub use compile::{Diagnostic, Formats, Output, Severity, compile, compile_template_preview};
 pub use highlight::{Token, highlight_typst};
+pub use profile::{ProfileVisibility, TemplateVisibility};
 pub use workspace::{
     ResumeInfo, SchemaError, TemplateInfo, Workspace, WorkspaceManifest, validate_value,
 };

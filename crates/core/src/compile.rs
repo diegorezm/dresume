@@ -7,6 +7,7 @@ use typst_layout::PagedDocument;
 use typst_pdf::PdfOptions;
 use typst_svg::SvgOptions;
 
+use crate::profile::RENDERED_PROFILE;
 use crate::workspace::{PROFILE, Workspace, resume_path};
 use crate::world::{Overlay, ResumeWorld};
 
@@ -91,8 +92,12 @@ fn run(
     formats: Formats,
 ) -> Result<Output> {
     let main = format!("templates/{template}/template.typ");
-    let inputs = [("resume", &*format!("/{data}")), ("profile", &*format!("/{PROFILE}"))];
-    let world = ResumeWorld::new(ws.root(), &main, &inputs, overlay)?;
+    // Templates read a normalized profile without the fields they hide (see profile.rs).
+    let mut overlay = overlay.clone();
+    let profile = ws.rendered_profile(template, overlay.get(PROFILE).map(String::as_str))?;
+    overlay.insert(RENDERED_PROFILE.into(), profile);
+    let inputs = [("resume", &*format!("/{data}")), ("profile", &*format!("/{RENDERED_PROFILE}"))];
+    let world = ResumeWorld::new(ws.root(), &main, &inputs, &overlay)?;
 
     let warned = typst::compile::<PagedDocument>(&world);
     let mut out = Output::default();
