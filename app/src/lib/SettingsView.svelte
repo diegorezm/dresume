@@ -196,11 +196,14 @@
   }
   .grid2 {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    /* Wide enough for the longest translated option row; wraps to fewer columns otherwise. */
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
     gap: 1.25rem;
   }
   .segmented {
     display: inline-flex;
+    flex-wrap: wrap;
+    max-width: 100%;
     background: var(--surface-2);
     border-radius: 999px;
     padding: 3px;
