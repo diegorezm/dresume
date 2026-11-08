@@ -4,3 +4,4 @@ output/
 app/build/
 app/.svelte-kit/
 src/lib/dev/fixture.json
+site/dist/
