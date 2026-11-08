@@ -4,6 +4,7 @@
   import { api, debounce, type Diagnostic, type Json, type Schema, type SchemaError } from "./api";
   import ResumeForm from "./form/ResumeForm.svelte";
   import Preview from "./Preview.svelte";
+  import SplitPane from "./SplitPane.svelte";
 
   interface Props {
     id: string;
@@ -99,7 +100,8 @@
 
 <svelte:window {onkeydown} />
 
-<div class="split">
+<SplitPane id="resume">
+  {#snippet left()}
   <section class="form-pane">
     <header class="topbar">
       <div class="crumbs">
@@ -129,24 +131,21 @@
       {/if}
     </div>
   </section>
+  {/snippet}
 
+  {#snippet right()}
   <section class="preview-pane">
     <Preview {svg} {diagnostics} {busy} />
   </section>
-</div>
+  {/snippet}
+</SplitPane>
 
 <style>
-  .split {
-    display: grid;
-    grid-template-columns: minmax(380px, 1fr) minmax(420px, 1fr);
-    height: 100%;
-    min-height: 0;
-  }
   .form-pane {
+    height: 100%;
     display: flex;
     flex-direction: column;
     min-height: 0;
-    border-right: 1px solid var(--border);
   }
   .form-scroll {
     flex: 1;
@@ -165,6 +164,7 @@
     padding: 0 1rem;
   }
   .preview-pane {
+    height: 100%;
     min-height: 0;
   }
 </style>

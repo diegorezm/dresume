@@ -3,6 +3,7 @@
   import { api, debounce, type Diagnostic, type TemplateInfo } from "./api";
   import CodeEditor from "./CodeEditor.svelte";
   import Preview from "./Preview.svelte";
+  import SplitPane from "./SplitPane.svelte";
 
   interface Props {
     template: TemplateInfo;
@@ -83,7 +84,8 @@
 
 <svelte:window {onkeydown} />
 
-<div class="split">
+<SplitPane id="template">
+  {#snippet left()}
   <section class="code-pane">
     <header class="topbar">
       <div class="crumbs">
@@ -110,24 +112,21 @@
       {/if}
     </div>
   </section>
+  {/snippet}
 
+  {#snippet right()}
   <section class="preview-pane">
     <Preview {svg} {diagnostics} {busy} ondiagnostic={jump} />
   </section>
-</div>
+  {/snippet}
+</SplitPane>
 
 <style>
-  .split {
-    display: grid;
-    grid-template-columns: minmax(440px, 1fr) minmax(420px, 1fr);
-    height: 100%;
-    min-height: 0;
-  }
   .code-pane {
+    height: 100%;
     display: flex;
     flex-direction: column;
     min-height: 0;
-    border-right: 1px solid var(--border);
   }
   .tabs {
     display: flex;
@@ -154,6 +153,7 @@
     min-height: 0;
   }
   .preview-pane {
+    height: 100%;
     min-height: 0;
   }
 </style>
