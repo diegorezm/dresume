@@ -55,10 +55,13 @@ jobs:
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
         with:
           projectPath: app
           tagName: ${{ github.ref_name }}
           releaseName: dresume ${{ github.ref_name }}
           releaseBody: See CHANGELOG.md for what's new.
           releaseDraft: true
+          includeUpdaterJson: true
           args: ${{ matrix.args }}
