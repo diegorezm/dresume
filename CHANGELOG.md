@@ -3,6 +3,13 @@
 All notable changes to dresume. The format follows [Keep a Changelog](https://keepachangelog.com/)
 and the project uses [Semantic Versioning](https://semver.org/).
 
+## [0.1.1] - 2026-11-09
+
+### Added
+- Auto-updater: the app checks GitHub releases on startup and offers "Update and restart"; Settings has
+  an Updates section with the current version and a manual check. Updates are signed.
+- Release workflow publishes signed updater artifacts and `latest.json`.
+
 ## [0.1.0] - 2026-11-08
 
 First release.
