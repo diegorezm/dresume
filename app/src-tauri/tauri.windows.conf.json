@@ -1,0 +1,11 @@
+{
+  "bundle": {
+    "targets": [
+      "nsis",
+      "msi"
+    ],
+    "resources": {
+      "../../target/release/dresume.exe": "bin/dresume.exe"
+    }
+  }
+}
