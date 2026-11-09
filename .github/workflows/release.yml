@@ -1,0 +1,64 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+          - os: ubuntu-22.04
+          - os: macos-latest
+            args: --target universal-apple-darwin
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ runner.os == 'macOS' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: app/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: app
+
+      # The universal macOS build looks for the CLI under the universal target dir.
+      - name: Universal CLI (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          cargo build --release -p dresume-cli --target aarch64-apple-darwin
+          cargo build --release -p dresume-cli --target x86_64-apple-darwin
+          mkdir -p target/release
+          lipo -create -output target/release/dresume target/aarch64-apple-darwin/release/dresume target/x86_64-apple-darwin/release/dresume
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: app
+          tagName: ${{ github.ref_name }}
+          releaseName: dresume ${{ github.ref_name }}
+          releaseBody: See CHANGELOG.md for what's new.
+          releaseDraft: true
+          args: ${{ matrix.args }}
