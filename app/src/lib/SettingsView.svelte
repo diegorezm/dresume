@@ -3,6 +3,7 @@
   import { api, type AgentInfo, type PermissionMode } from "./api";
   import { appearance, type FontChoice, type Radius, type Theme } from "./theme.svelte";
   import { LOCALES, i18n, t, type Key, type Locale } from "./i18n.svelte";
+  import { updater } from "./updater.svelte";
 
   let customName = $state("");
 
@@ -143,6 +144,24 @@
       />
     </div>
   </section>
+  {#if updater.supported}
+    <section class="card">
+      <h3>{t("settings.updates")}</h3>
+      <div class="row">
+        <span>{t("settings.version", { v: updater.current })}</span>
+        {#if updater.status === "available"}
+          <button class="primary" onclick={() => updater.install()}>{t("update.install")}</button>
+        {:else}
+          <button disabled={updater.status === "checking" || updater.status === "downloading"} onclick={() => updater.check()}>{t("settings.checkUpdates")}</button>
+        {/if}
+      </div>
+      {#if updater.status === "checking"}<p class="hint">{t("update.checking")}</p>
+      {:else if updater.status === "upToDate"}<p class="hint">{t("update.upToDate")}</p>
+      {:else if updater.status === "available"}<p class="hint">{t("update.available", { v: updater.version })}</p>
+      {:else if updater.status === "downloading"}<p class="hint">{t("update.downloading", { n: Math.round(updater.progress * 100) })}</p>
+      {:else if updater.status === "error"}<p class="hint">{t("update.error")}</p>{/if}
+    </section>
+  {/if}
 </div>
 
 <style>

@@ -3,6 +3,8 @@
   import { isTauri } from "@tauri-apps/api/core";
   import { appearance } from "$lib/theme.svelte";
   import TitleBar from "$lib/TitleBar.svelte";
+  import UpdateBanner from "$lib/UpdateBanner.svelte";
+  import { updater } from "$lib/updater.svelte";
 
   let { children } = $props();
 
@@ -15,6 +17,7 @@
     }
     await appearance.load();
   })();
+  ready.then(() => updater.check());
 </script>
 
 <div class="window">
@@ -22,6 +25,7 @@
   <div class="content">
     {#await ready then}
       {@render children()}
+      <UpdateBanner />
     {/await}
   </div>
 </div>

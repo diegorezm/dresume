@@ -196,6 +196,16 @@ const en = {
   "agent.modeReadOnlyDesc": "The agent can read and suggest, but every change is refused.",
   "settings.agent": "AI agent",
   "settings.agentHint": "dresume drives the agents installed on this computer. Each change can be reviewed and undone in the agent panel.",
+  "settings.updates": "Updates",
+  "settings.version": (p) => `dresume ${p.v}`,
+  "settings.checkUpdates": "Check for updates",
+  "update.checking": "Checking…",
+  "update.upToDate": "You're on the latest version.",
+  "update.error": "Couldn't check for updates.",
+  "update.available": (p) => `dresume ${p.v} is available.`,
+  "update.install": "Update and restart",
+  "update.later": "Later",
+  "update.downloading": (p) => `Downloading update… ${p.n}%`,
   "settings.agentNone": "None installed",
 } satisfies Record<string, Entry>;
 
@@ -379,6 +389,16 @@ const pt: Record<Key, Entry> = {
   "agent.modeReadOnlyDesc": "O agente pode ler e sugerir, mas toda mudança é recusada.",
   "settings.agent": "Agente de IA",
   "settings.agentHint": "O dresume usa os agentes instalados neste computador. Cada mudança pode ser revisada e desfeita no painel do agente.",
+  "settings.updates": "Atualizações",
+  "settings.version": (p) => `dresume ${p.v}`,
+  "settings.checkUpdates": "Procurar atualizações",
+  "update.checking": "Procurando…",
+  "update.upToDate": "Você está na versão mais recente.",
+  "update.error": "Não foi possível procurar atualizações.",
+  "update.available": (p) => `dresume ${p.v} está disponível.`,
+  "update.install": "Atualizar e reiniciar",
+  "update.later": "Depois",
+  "update.downloading": (p) => `Baixando atualização… ${p.n}%`,
   "settings.agentNone": "Nenhum instalado",
 };
 

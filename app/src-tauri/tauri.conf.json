@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "dresume",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "identifier": "dev.diegorezm.dresume",
   "build": {
     "beforeDevCommand": "pnpm dev",
@@ -53,6 +53,18 @@
         ],
         "displayLanguageSelector": true,
         "installerHooks": "installer/hooks.nsh"
+      }
+    },
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEU3MTc1NjI1ODI2MENENjcKUldSbnpXQ0NKVllYNTJVTFZoa1plWEVwcHRTZ3kzak9RZEVGSTZNZk9pREgyd2pTNDMzK2FTb3oK",
+      "endpoints": [
+        "https://github.com/diegorezm/dresume/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
       }
     }
   }
