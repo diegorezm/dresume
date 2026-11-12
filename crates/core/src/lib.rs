@@ -12,6 +12,7 @@
 //!   sample.yaml             sample content used to preview the template
 //! resumes/<id>.yaml         content only; `template: <id>` links it
 //! fonts/                    optional extra fonts
+//! memory.md                 facts agents remember about the user (see [`memory`])
 //! ```
 //!
 //! Templates read their data through `sys.inputs.resume` and
@@ -19,6 +20,7 @@
 
 mod compile;
 mod highlight;
+pub mod memory;
 mod profile;
 mod world;
 mod workspace;

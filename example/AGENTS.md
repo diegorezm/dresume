@@ -16,6 +16,7 @@ templates/<id>/
   *.typ                 helpers imported by template.typ
 resumes/<id>.yaml       resume content; the `template: <id>` key links it to a template
 fonts/                  optional extra fonts (.ttf/.otf)
+memory.md               durable facts about the user, carried between chats (see Memory)
 ```
 
 ## Rules
@@ -25,6 +26,16 @@ fonts/                  optional extra fonts (.ttf/.otf)
 - Editing a template changes every resume linked to it. Run `dresume list` to see which ones are affected.
 - Personal info shared across resumes belongs in `profile.yaml`, not in individual resumes.
 - Ids (resume file names, template folder names) use only letters, digits, `-` and `_`.
+
+## Memory
+
+`memory.md` holds short facts about the user that should survive between chats, under three
+sections: `## About the user`, `## Preferences`, `## Done`. One fact per `- fact (YYYY-MM-DD)` line.
+
+- Save a fact when you learn something durable (background, a preference, something they did):
+  `dresume remember <about|preferences|done> "<fact>"` or the MCP tool `remember`. One short fact per call.
+- Contact info goes in `profile.yaml`, not in memory.
+- The file stays under 4096 bytes: saving dedupes it and drops the oldest `Done` items. Lines with 📌 are never dropped.
 
 ## Template contract
 
@@ -63,9 +74,11 @@ dresume rename <id> <new-id>                # rename a resume file
 dresume delete <id>                         # delete a resume
 dresume edit-template <id> [--name <n>] [--description <d>] [--id <new-id>]  # new id relinks its resumes
 dresume delete-template <id>                # deletes the template AND every resume linked to it
+dresume remember <section> "<fact>"         # save a fact to memory.md (about, preferences, done)
+dresume memory [--compact]                  # print memory.md and its size; --compact cleans it up
 dresume profile-fields [<template> --hide phone,github]   # which profile fields each template shows
 dresume mcp                                 # MCP server over stdio with the same tools (list, schema,
-                                            # show, validate, build, new_template, preview_template)
+                                            # show, validate, build, new_template, preview_template, remember)
 ```
 
 To add the tools to your agent: `claude mcp add dresume -- dresume -w <workspace> mcp` (or the equivalent

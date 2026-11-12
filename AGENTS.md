@@ -29,6 +29,7 @@ crates/
     src/world.rs              Typst `World` impl: fonts (system+embedded+<ws>/fonts), files, packages, overlay
     src/compile.rs            compile() / compile_template_preview() -> PDF and/or per-page SVG + Diagnostics
     src/highlight.rs          Typst syntax highlighting (typst-syntax) with UTF-16 offsets for the editor
+    src/memory.rs             memory.md: parse, dedupe (Jaccard), trim to LIMIT, remember()
     src/profile.rs            profile handed to templates: link normalization + per-template `profile.hide`
     assets/AGENTS.md          guide copied into every new workspace (user-facing, agent-oriented)
     assets/starter/           "Basic" template embedded with include_str! and written by `init`
@@ -42,7 +43,7 @@ crates/
     src/snapshot.rs           workspace snapshot → diffs of what the agent changed + undo
     examples/chat.rs          manual run against a real agent (`--example chat -- claude <dir> "<prompt>"`)
   cli/src/main.rs             `dresume` binary (clap). Every command supports --json
-  cli/src/mcp.rs              `dresume mcp`: MCP stdio server (list, schema, show, validate, build, new_template, preview_template)
+  cli/src/mcp.rs              `dresume mcp`: MCP stdio server (list, schema, show, validate, build, new_template, preview_template, remember)
 app/                          desktop app
   src-tauri/src/lib.rs        Tauri commands: thin wrappers over dresume-core + settings/themes I/O
   src-tauri/src/agent.rs      agent commands (start/send/respond/cancel/changes/keep/undo) + chat history
@@ -59,6 +60,7 @@ app/                          desktop app
   src/lib/AgentPanel.svelte   chat with the local agent (resume or template): tool calls, approvals, diff + keep/undo
   src/lib/AgentPane.svelte    resizable side pane hosting AgentPanel (resume and template editors, Ctrl+J)
   src/lib/TemplateEditor.svelte template code editor (tabs per file) + preview against sample.yaml
+  src/lib/MemoryView.svelte   memory.md editor: size meter, clean up (core) / compact with the agent
   src/lib/ProfileEditor.svelte profile.yaml editor + "show in templates" visibility table
   src/lib/CodeEditor.svelte   CodeMirror 6 wrapper, themed through CSS variables
   src/lib/typstHighlight.ts   CodeMirror extension calling the highlight_typst command

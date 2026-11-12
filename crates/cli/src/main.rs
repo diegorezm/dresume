@@ -85,6 +85,13 @@ enum Command {
     },
     /// Delete a template and every resume linked to it.
     DeleteTemplate { id: String },
+    /// Remember a durable fact about the user in memory.md (section: about, preferences, done).
+    Remember { section: String, fact: String },
+    /// Print memory.md and its size; --compact dedupes it and trims old "done" items.
+    Memory {
+        #[arg(long)]
+        compact: bool,
+    },
     /// Show which profile fields each template shows; with --hide, set them for one template.
     ProfileFields {
         template: Option<String>,
@@ -94,7 +101,7 @@ enum Command {
     },
     /// Print a template's JSON Schema.
     Schema { template: String },
-    /// Serve the workspace as an MCP server over stdio (tools: list, schema, show, validate, build, preview_template).
+    /// Serve the workspace as an MCP server over stdio (tools: list, schema, show, validate, build, new_template, preview_template, remember).
     Mcp,
 }
 
@@ -273,6 +280,27 @@ fn run(cli: &Cli) -> Result<bool> {
             let resumes = workspace(cli)?.delete_template(id)?;
             emit(cli, json!({ "deleted": id, "resumes": resumes }), || {
                 println!("deleted templates/{id} and {} resume(s)", resumes.len())
+            });
+            Ok(true)
+        }
+        Command::Remember { section, fact } => {
+            let out = workspace(cli)?.remember(section, fact)?;
+            emit(cli, json!(out), || {
+                println!("{} ({}/{} bytes)", if out.added { "remembered" } else { "updated" }, out.status.size, out.status.limit);
+                out.removed.iter().for_each(|r| println!("  dropped: {r}"));
+            });
+            Ok(true)
+        }
+        Command::Memory { compact } => {
+            let ws = workspace(cli)?;
+            let removed = if *compact { ws.compact_memory()?.removed } else { vec![] };
+            let text = ws.memory();
+            let status = dresume_core::memory::status(&text);
+            emit(cli, json!({ "text": text, "status": status, "removed": removed }), || {
+                print!("{text}");
+                println!("-- {}/{} bytes", status.size, status.limit);
+                removed.iter().for_each(|r| println!("  dropped: {r}"));
+                status.similar.iter().for_each(|(a, b)| println!("  similar: \"{a}\" ~ \"{b}\""));
             });
             Ok(true)
         }

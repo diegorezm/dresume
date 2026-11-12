@@ -102,6 +102,18 @@ fn tools() -> Value {
             },
         },
         {
+            "name": "remember",
+            "description": "Save a durable fact about the user to memory.md for future chats (background,                 preferences, what they already did). One short fact per call; not contact info (that is profile.yaml).",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "section": { "type": "string", "enum": ["about", "preferences", "done"] },
+                    "fact": { "type": "string", "description": "One short sentence" },
+                },
+                "required": ["section", "fact"],
+            },
+        },
+        {
             "name": "preview_template",
             "description": "Compile a template with its sample.yaml to check it for errors.",
             "inputSchema": { "type": "object", "properties": { "template": template }, "required": ["template"] },
@@ -157,6 +169,7 @@ fn call(start: &Path, name: &str, args: &Value) -> Result<(Value, bool)> {
             let output = compile_template_preview(&ws, template, &Overlay::new(), Formats::PDF)?;
             Ok((json!({ "template": template, "ok": output.ok(), "diagnostics": output.diagnostics }), output.ok()))
         }
+        "remember" => Ok((json!(ws.remember(str_arg("section")?, str_arg("fact")?)?), true)),
         _ => bail!("unknown tool `{name}`"),
     }
 }
