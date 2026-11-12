@@ -9,6 +9,8 @@ pub const MANIFEST: &str = "dresume.yaml";
 pub const PROFILE: &str = "profile.yaml";
 pub const TEMPLATES_DIR: &str = "templates";
 pub const RESUMES_DIR: &str = "resumes";
+/// Where "save PDF" writes: `pdfs/<template>/<resume>.pdf`.
+pub const PDFS_DIR: &str = "pdfs";
 
 /// Guide for AI agents written into new workspaces.
 const AGENTS_MD: &str = include_str!("../assets/AGENTS.md");
@@ -239,6 +241,71 @@ impl Workspace {
         check_id(id)?;
         fs::remove_file(self.root.join(resume_path(id)))?;
         Ok(())
+    }
+
+    /// Renames a resume file (`resumes/<id>.yaml` → `resumes/<new_id>.yaml`).
+    pub fn rename_resume(&self, id: &str, new_id: &str) -> Result<ResumeInfo> {
+        check_id(id)?;
+        check_id(new_id)?;
+        let to = self.root.join(resume_path(new_id));
+        if id != new_id && to.exists() {
+            bail!("resume `{new_id}` already exists");
+        }
+        fs::rename(self.root.join(resume_path(id)), &to)?;
+        self.resume_info(new_id)
+    }
+
+    /// Workspace-relative path where a resume's PDF is saved by default.
+    pub fn pdf_path(&self, id: &str) -> Result<String> {
+        let info = self.resume_info(id)?;
+        Ok(format!("{PDFS_DIR}/{}/{id}.pdf", info.template))
+    }
+
+    /// Changes a template's display name/description and, when `new_id` differs, its id
+    /// (directory name), relinking every resume that uses it.
+    pub fn update_template(&self, id: &str, new_id: &str, name: &str, description: &str) -> Result<TemplateInfo> {
+        check_id(id)?;
+        check_id(new_id)?;
+        let meta_path = self.template_dir(id).join("template.yaml");
+        // Keep other keys (e.g. `profile.hide`) as they are.
+        let mut meta: Value = read_yaml(&meta_path)?;
+        let obj = meta.as_object_mut().context("template.yaml must be a mapping")?;
+        obj.insert("name".into(), name.into());
+        obj.insert("description".into(), description.into());
+        fs::write(&meta_path, serde_yaml::to_string(&meta)?)?;
+        if id != new_id {
+            if self.template_dir(new_id).exists() {
+                bail!("template `{new_id}` already exists");
+            }
+            fs::rename(self.template_dir(id), self.template_dir(new_id))?;
+            for r in self.resumes()?.into_iter().filter(|r| r.template == id) {
+                let mut value = self.resume(&r.id)?;
+                if let Some(obj) = value.as_object_mut() {
+                    obj.insert("template".into(), new_id.into());
+                }
+                fs::write(self.root.join(&r.path), serde_yaml::to_string(&value)?)?;
+            }
+        }
+        self.templates()?
+            .into_iter()
+            .find(|t| t.id == new_id)
+            .with_context(|| format!("template `{new_id}` not found"))
+    }
+
+    /// Deletes a template and every resume linked to it. Returns the deleted resume ids.
+    pub fn delete_template(&self, id: &str) -> Result<Vec<String>> {
+        check_id(id)?;
+        let dir = self.template_dir(id);
+        if !dir.is_dir() {
+            bail!("template `{id}` not found");
+        }
+        let mut deleted = Vec::new();
+        for r in self.resumes()?.into_iter().filter(|r| r.template == id) {
+            fs::remove_file(self.root.join(&r.path))?;
+            deleted.push(r.id);
+        }
+        fs::remove_dir_all(dir)?;
+        Ok(deleted)
     }
 
     pub fn profile(&self) -> Result<Value> {

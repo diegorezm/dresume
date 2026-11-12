@@ -68,6 +68,23 @@ enum Command {
     Duplicate { id: String, #[arg(long)] from: String },
     /// Create a template, optionally copying an existing one (`--from @starter` copies the built-in Basic).
     NewTemplate { id: String, #[arg(long)] name: String, #[arg(long)] from: Option<String> },
+    /// Rename a resume (its file name).
+    Rename { id: String, new_id: String },
+    /// Delete a resume.
+    Delete { id: String },
+    /// Change a template's name/description, or its id with --id (linked resumes are relinked).
+    EditTemplate {
+        id: String,
+        #[arg(long)]
+        name: Option<String>,
+        #[arg(long)]
+        description: Option<String>,
+        /// New id (folder name).
+        #[arg(long = "id")]
+        new_id: Option<String>,
+    },
+    /// Delete a template and every resume linked to it.
+    DeleteTemplate { id: String },
     /// Show which profile fields each template shows; with --hide, set them for one template.
     ProfileFields {
         template: Option<String>,
@@ -228,6 +245,35 @@ fn run(cli: &Cli) -> Result<bool> {
         Command::NewTemplate { id, name, from } => {
             let info = workspace(cli)?.new_template(id, name, from.as_deref())?;
             emit(cli, json!(info), || println!("created templates/{}", info.id));
+            Ok(true)
+        }
+        Command::Rename { id, new_id } => {
+            let info = workspace(cli)?.rename_resume(id, new_id)?;
+            emit(cli, json!(info), || println!("renamed to {}", info.path));
+            Ok(true)
+        }
+        Command::Delete { id } => {
+            workspace(cli)?.delete_resume(id)?;
+            emit(cli, json!({ "deleted": id }), || println!("deleted resumes/{id}.yaml"));
+            Ok(true)
+        }
+        Command::EditTemplate { id, name, description, new_id } => {
+            let ws = workspace(cli)?;
+            let current = ws.templates()?.into_iter().find(|t| &t.id == id).with_context(|| format!("template `{id}` not found"))?;
+            let info = ws.update_template(
+                id,
+                new_id.as_deref().unwrap_or(id),
+                name.as_deref().unwrap_or(&current.name),
+                description.as_deref().unwrap_or(&current.description),
+            )?;
+            emit(cli, json!(info), || println!("updated templates/{}", info.id));
+            Ok(true)
+        }
+        Command::DeleteTemplate { id } => {
+            let resumes = workspace(cli)?.delete_template(id)?;
+            emit(cli, json!({ "deleted": id, "resumes": resumes }), || {
+                println!("deleted templates/{id} and {} resume(s)", resumes.len())
+            });
             Ok(true)
         }
         Command::Show { id } => {

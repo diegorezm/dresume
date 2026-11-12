@@ -59,6 +59,10 @@ dresume preview-template <template>         # compile a template with its sample
 dresume new <id> --template <template>      # new resume from the template's sample
 dresume duplicate <id> --from <resume>      # new resume with a copy of another one
 dresume new-template <id> --name <name> [--from <template>|@starter]
+dresume rename <id> <new-id>                # rename a resume file
+dresume delete <id>                         # delete a resume
+dresume edit-template <id> [--name <n>] [--description <d>] [--id <new-id>]  # new id relinks its resumes
+dresume delete-template <id>                # deletes the template AND every resume linked to it
 dresume profile-fields [<template> --hide phone,github]   # which profile fields each template shows
 dresume mcp                                 # MCP server over stdio with the same tools (list, schema,
                                             # show, validate, build, new_template, preview_template)
