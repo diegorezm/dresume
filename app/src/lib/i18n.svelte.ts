@@ -61,6 +61,7 @@ const en = {
   "settings.memoryOff": "Off",
   "settings.memoryHint": "Agents read memory.md and save facts about you (background, preferences, what you did) for future chats.",
   "common.rename": "Rename",
+  "common.more": "More actions",
   "common.edit": "Edit",
   "resume.savePdf": "Save PDF",
   "resume.savePdfHint": "Saves to pdfs/<template>/ in the workspace",
@@ -81,7 +82,7 @@ const en = {
   "renameResume.taken": "A resume with this id already exists.",
 
   // Resume editor
-  "resume.exportPdf": "Export…",
+  "resume.exportPdf": "Export PDF to…",
   "resume.confirmDelete": (p) => `Delete resume "${p.id}"? This removes resumes/${p.id}.yaml.`,
   "resume.exportFailed": "Export failed — see errors",
   "resume.exported": (p) => `Saved to ${p.path}`,
@@ -300,6 +301,7 @@ const pt: Record<Key, Entry> = {
   "settings.memoryOff": "Desligada",
   "settings.memoryHint": "Os agentes leem o memory.md e guardam fatos sobre você (histórico, preferências, o que já fez) para os próximos chats.",
   "common.rename": "Renomear",
+  "common.more": "Mais ações",
   "common.edit": "Editar",
   "resume.savePdf": "Salvar PDF",
   "resume.savePdfHint": "Salva em pdfs/<template>/ no workspace",
@@ -319,7 +321,7 @@ const pt: Record<Key, Entry> = {
   "renameResume.file": "Arquivo",
   "renameResume.taken": "Já existe um currículo com esse id.",
 
-  "resume.exportPdf": "Exportar…",
+  "resume.exportPdf": "Exportar PDF para…",
   "resume.confirmDelete": (p) => `Excluir o currículo "${p.id}"? Isso apaga resumes/${p.id}.yaml.`,
   "resume.exportFailed": "Falha ao exportar — veja os erros",
   "resume.exported": (p) => `Salvo em ${p.path}`,

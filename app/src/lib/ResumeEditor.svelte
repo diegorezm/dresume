@@ -8,6 +8,7 @@
   import SplitPane from "./SplitPane.svelte";
   import ViewSwitch from "./ViewSwitch.svelte";
   import AgentPane from "./AgentPane.svelte";
+  import MoreMenu from "./MoreMenu.svelte";
   import { onDestroy } from "svelte";
   import { isShortcut, layout } from "./layout.svelte";
 
@@ -167,12 +168,16 @@
           <button class="ghost flash" onclick={() => revealItemInDir(lastPdf!)}>{message}</button>
         {:else}<span class="flash">{message}</span>{/if}
       {/if}
-      <button class="ghost" onclick={rename}>{t("common.rename")}</button>
-      <button class="ghost danger" onclick={remove}>{t("common.delete")}</button>
       <button class:active={layout.agent} onclick={() => layout.toggleAgent()} title={t("agent.toggle")}>✦ {t("agent.title")}</button>
       <button onclick={savePdf} title={t("resume.savePdfHint")}>{t("resume.savePdf")}</button>
-      <button onclick={exportPdf} title={t("resume.exportPdfHint")}>{t("resume.exportPdf")}</button>
       <button class="primary" onclick={persist} disabled={!dirty}>{t("common.save")}</button>
+      <MoreMenu
+        items={[
+          { label: t("resume.exportPdf"), onclick: exportPdf },
+          { label: t("common.rename"), onclick: rename },
+          { label: t("common.delete"), onclick: remove, danger: true },
+        ]}
+      />
     </div>
   </header>
 

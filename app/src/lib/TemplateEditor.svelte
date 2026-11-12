@@ -6,6 +6,7 @@
   import SplitPane from "./SplitPane.svelte";
   import ViewSwitch from "./ViewSwitch.svelte";
   import AgentPane from "./AgentPane.svelte";
+  import MoreMenu from "./MoreMenu.svelte";
   import { onDestroy } from "svelte";
   import { isShortcut, layout } from "./layout.svelte";
 
@@ -142,10 +143,14 @@
     <div class="actions">
       <ViewSwitch id="template" {narrow} />
       {#if message}<span class="flash">{message}</span>{/if}
-      <button class="ghost" onclick={editInfo}>{t("common.edit")}</button>
-      <button class="ghost danger" onclick={remove}>{t("common.delete")}</button>
       <button class:active={layout.agent} onclick={() => layout.toggleAgent()} title={t("agent.toggle")}>✦ {t("agent.title")}</button>
       <button class="primary" onclick={persist} disabled={dirtyFiles.length === 0}>{t("common.save")}</button>
+      <MoreMenu
+        items={[
+          { label: t("common.edit"), onclick: editInfo },
+          { label: t("common.delete"), onclick: remove, danger: true },
+        ]}
+      />
     </div>
   </header>
 
