@@ -43,6 +43,19 @@ export interface ProfileVisibility {
   templates: { id: string; name: string; hidden: string[] }[];
 }
 
+/** memory.md size against its budget, and facts that may say the same thing. */
+export interface MemoryStatus {
+  size: number;
+  limit: number;
+  similar: [string, string][];
+}
+
+export interface Remembered {
+  added: boolean;
+  removed: string[];
+  status: MemoryStatus;
+}
+
 export interface Preview {
   svg: string[];
   diagnostics: Diagnostic[];
@@ -115,6 +128,10 @@ export const api = {
     invoke<TemplateInfo>("update_template", { id, newId, name, description }),
   /** Deletes a template and its resumes; returns the deleted resume ids. */
   deleteTemplate: (id: string) => invoke<string[]>("delete_template", { id }),
+  getMemory: () => invoke<[string, MemoryStatus]>("get_memory"),
+  saveMemory: (text: string) => invoke<MemoryStatus>("save_memory", { text }),
+  /** Dedupes memory.md and trims old "Done" items over the limit. */
+  compactMemory: () => invoke<Remembered>("compact_memory"),
   newTemplate: (id: string, name: string, from: string | null) =>
     invoke<TemplateInfo>("new_template", { id, name, from }),
   templateFiles: (template: string) => invoke<string[]>("template_files", { template }),
@@ -133,12 +150,13 @@ export const api = {
     mode: PermissionMode,
     model: string | null,
     effort: string | null,
-    target: AgentTarget,
+    target: AgentTarget | { kind: "memory" },
+    memory: boolean,
     onEvent: (e: AgentEvent) => void,
   ) => {
     const channel = new Channel<AgentEvent>();
     channel.onmessage = onEvent;
-    return invoke<number>("agent_start", { kind, mode, model, effort, target, onEvent: channel });
+    return invoke<number>("agent_start", { kind, mode, model, effort, target, memory, onEvent: channel });
   },
   agentSend: (id: number, text: string) => invoke<void>("agent_send", { id, text }),
   agentRespond: (id: number, request: string, allow: boolean) =>

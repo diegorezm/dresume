@@ -113,6 +113,12 @@
       {/each}
     </div>
     <p class="hint">{t(modes.find((m) => m.id === s.agentMode)?.desc ?? "agent.modeAutoEditDesc")} {t("settings.agentHint")}</p>
+    <h3 class="sub-h">{t("memory.title")}</h3>
+    <div class="segmented">
+      <button class:active={s.memory} onclick={() => appearance.update({ memory: true })}>{t("settings.memoryOn")}</button>
+      <button class:active={!s.memory} onclick={() => appearance.update({ memory: false })}>{t("settings.memoryOff")}</button>
+    </div>
+    <p class="hint">{t("settings.memoryHint")}</p>
   </section>
 
   <section class="card grid2">

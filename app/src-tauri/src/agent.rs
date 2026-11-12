@@ -58,14 +58,17 @@ pub async fn agent_start(
     model: Option<String>,
     effort: Option<String>,
     target: Target,
+    memory: bool,
     on_event: Channel<AgentEvent>,
 ) -> CmdResult<u32> {
-    let (cwd, open) = with_ws(&state, |ws| {
+    let (cwd, open, facts) = with_ws(&state, |ws| {
         let open = match &target {
             Target::Resume(id) => Open::Resume { id: id.clone(), template: ws.resume_info(id)?.template },
             Target::Template(id) => Open::Template(id.clone()),
+            Target::Memory => Open::Memory,
         };
-        Ok((ws.root().to_path_buf(), open))
+        let facts = memory.then(|| ws.memory());
+        Ok((ws.root().to_path_buf(), open, facts))
     })?;
     // With the dresume CLI installed, the agent also gets its MCP tools (validate, build, …).
     let mcp = dresume_agent::find_program("dresume").map(|command| McpServer {
@@ -73,7 +76,7 @@ pub async fn agent_start(
         command,
         args: vec!["-w".into(), cwd.to_string_lossy().into_owned(), "mcp".into()],
     });
-    let instructions = instructions(&open, mcp.is_some());
+    let instructions = instructions(&open, mcp.is_some(), facts.as_deref());
     let opts = SessionOptions { cwd: cwd.clone(), instructions, mode, model, effort, mcp };
     let session = dresume_agent::start(kind, opts, Arc::new(move |e| {
         let _ = on_event.send(e);
@@ -137,7 +140,7 @@ pub fn agent_stop(agents: State<AgentState>, id: u32) {
 
 /// Kept short on purpose: it rides along with every request. It gives the agent the paths it
 /// needs up front so it doesn't spend turns exploring, and points to AGENTS.md only when needed.
-fn instructions(open: &Open, mcp: bool) -> String {
+fn instructions(open: &Open, mcp: bool, memory: Option<&str>) -> String {
     let mut text = String::from(concat!(
         "dresume workspace (Typst resumes). Content: resumes/<id>.yaml, valid per ",
         "templates/<template>/schema.json. Contacts: profile.yaml. ",
@@ -154,12 +157,24 @@ fn instructions(open: &Open, mcp: bool) -> String {
             "Open: templates/{id}/. Keep schema.json and sample.yaml in sync with fields the layout uses; \
              changes restyle every resume linked to it.\n"
         )),
+        Open::Memory => {
+            text.push_str(&format!(
+                "Open: memory.md. Keep its `## ` sections and the `- fact (YYYY-MM-DD)` lines; keep lines \
+                 with 📌; stay under {} bytes.\n",
+                dresume_core::memory::LIMIT
+            ));
+            return text;
+        }
+    }
+    if let Some(memory) = memory {
+        text.push_str(&memory_note(memory, mcp));
     }
     let check = match (open, mcp) {
         (Open::Template(_), true) => "Check with the dresume MCP tool `preview_template`.\n",
         (Open::Template(_), false) => "Check with `dresume preview-template <id>` if available.\n",
         (Open::Resume { .. }, true) => "Check with the dresume MCP tool `validate`.\n",
         (Open::Resume { .. }, false) => "Check with `dresume validate` if available.\n",
+        (Open::Memory, _) => unreachable!(),
     };
     text.push_str(check);
     text.push_str(if mcp {
@@ -170,17 +185,52 @@ fn instructions(open: &Open, mcp: bool) -> String {
     text
 }
 
+/// The remembered facts (only headings with items, no comments) and how to add more.
+fn memory_note(memory: &str, mcp: bool) -> String {
+    let mut facts = String::new();
+    let mut heading = "";
+    for line in memory.lines() {
+        if let Some(h) = line.strip_prefix("## ") {
+            heading = h;
+        } else if line.starts_with("- ") {
+            if !heading.is_empty() {
+                facts.push_str(&format!("{heading}:\n"));
+                heading = "";
+            }
+            facts.push_str(line);
+            facts.push('\n');
+        }
+    }
+    let how = if mcp {
+        "the dresume MCP tool `remember`"
+    } else {
+        "a `- fact (YYYY-MM-DD)` line under About the user / Preferences / Done in memory.md"
+    };
+    let mut text = String::new();
+    if !facts.is_empty() {
+        text.push_str(&format!("What you know about the user from past chats (memory.md):\n{facts}"));
+    }
+    text.push_str(&format!(
+        "When you learn a durable fact about the user (background, preference, something they did), save it \
+         with {how}, one short fact at a time. Contact info goes in profile.yaml instead.\n"
+    ));
+    text
+}
+
 /// What the user has open in the app when talking to the agent.
 #[derive(serde::Deserialize)]
 #[serde(tag = "kind", content = "id", rename_all = "lowercase")]
 pub enum Target {
     Resume(String),
     Template(String),
+    /// memory.md (compacting it with the agent).
+    Memory,
 }
 
 enum Open {
     Resume { id: String, template: String },
     Template(String),
+    Memory,
 }
 
 /// Chat transcripts are keyed by workspace root and resume.

@@ -52,6 +52,8 @@ export interface Settings {
   /** Model and reasoning effort per agent; missing or `null` uses the agent's default. */
   agentModel: Partial<Record<AgentKind, string | null>>;
   agentEffort: Partial<Record<AgentKind, string | null>>;
+  /** Agents read and update memory.md (facts about the user across chats). */
+  memory: boolean;
 }
 
 export const BUILTIN_THEMES: Theme[] = [
@@ -183,6 +185,7 @@ export const DEFAULT_SETTINGS: Settings = {
   agentMode: "autoEdit",
   agentModel: {},
   agentEffort: {},
+  memory: true,
 };
 
 const FONTS: Record<FontChoice, string> = {

@@ -8,6 +8,7 @@ use std::sync::Mutex;
 use dresume_core::{
     Diagnostic, Formats, Overlay, ProfileVisibility, ResumeInfo, SchemaError, TemplateInfo,
     Workspace, compile, compile_template_preview,
+    memory::{self, MemoryStatus, Remembered},
 };
 use serde::Serialize;
 use serde_json::Value;
@@ -194,6 +195,25 @@ fn delete_template(state: State<AppState>, id: String) -> CmdResult<Vec<String>>
 }
 
 #[tauri::command]
+fn get_memory(state: State<AppState>) -> CmdResult<(String, MemoryStatus)> {
+    with_ws(&state, |ws| {
+        let text = ws.memory();
+        let status = memory::status(&text);
+        Ok((text, status))
+    })
+}
+
+#[tauri::command]
+fn save_memory(state: State<AppState>, text: String) -> CmdResult<MemoryStatus> {
+    with_ws(&state, |ws| ws.save_memory(&text))
+}
+
+#[tauri::command]
+fn compact_memory(state: State<AppState>) -> CmdResult<Remembered> {
+    with_ws(&state, |ws| ws.compact_memory())
+}
+
+#[tauri::command]
 fn new_template(state: State<AppState>, id: String, name: String, from: Option<String>) -> CmdResult<TemplateInfo> {
     with_ws(&state, |ws| ws.new_template(&id, &name, from.as_deref()))
 }
@@ -342,6 +362,9 @@ pub fn run() {
             rename_resume,
             update_template,
             delete_template,
+            get_memory,
+            save_memory,
+            compact_memory,
             new_template,
             template_files,
             read_template_file,

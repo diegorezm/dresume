@@ -7,6 +7,9 @@ export async function installMock() {
   let settings: Record<string, unknown> = { lastWorkspace: fixture.summary.root };
   const hidden: Record<string, string[]> = {};
   const chats: Record<string, unknown[]> = {};
+  let memory =
+    "# Memory\n\n## About the user\n- Backend developer moving into data (2026-11-10)\n\n" +
+    "## Preferences\n- Short bullets with metrics (2026-11-10)\n\n## Done\n";
 
   mockIPC((cmd, args: any) => {
     switch (cmd) {
@@ -34,6 +37,9 @@ export async function installMock() {
         const id = t?.resumes[0];
         return { svg: id ? fixture.svg[id] : [], diagnostics: [] };
       }
+      case "get_memory": return [memory, { size: memory.length, limit: 4096, similar: [] }];
+      case "save_memory": memory = args.text; return { size: memory.length, limit: 4096, similar: [] };
+      case "compact_memory": return { added: false, removed: [], status: { size: memory.length, limit: 4096, similar: [] } };
       case "highlight_typst": return roughHighlight(args.text);
       // The agent panel lists a fake agent; sessions start but never answer in the browser.
       case "list_agents": return [{ kind: "claude", name: "Claude Code", path: "claude", version: "dev mock" }];

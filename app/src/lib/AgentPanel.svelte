@@ -228,7 +228,7 @@
         status = "starting";
         const mine = ++generation;
         const mode = appearance.settings.agentMode;
-        const id = await api.agentStart(kind, mode, model?.id ?? null, effort, $state.snapshot(target), (e) => mine === generation && onEvent(e));
+        const id = await api.agentStart(kind, mode, model?.id ?? null, effort, $state.snapshot(target), appearance.settings.memory, (e) => mine === generation && onEvent(e));
         if (mine !== generation) return void api.agentStop(id);
         session = id;
       }

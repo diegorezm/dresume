@@ -7,6 +7,7 @@
   import ResumeEditor from "$lib/ResumeEditor.svelte";
   import TemplateEditor from "$lib/TemplateEditor.svelte";
   import ProfileEditor from "$lib/ProfileEditor.svelte";
+  import MemoryView from "$lib/MemoryView.svelte";
   import SettingsView from "$lib/SettingsView.svelte";
   import NewTemplateDialog from "$lib/NewTemplateDialog.svelte";
   import NewResumeDialog from "$lib/NewResumeDialog.svelte";
@@ -16,6 +17,7 @@
   type View =
     | { kind: "home" }
     | { kind: "profile" }
+    | { kind: "memory" }
     | { kind: "settings" }
     | { kind: "resume"; id: string }
     | { kind: "template"; id: string };
@@ -140,6 +142,9 @@
         <button class="item" class:active={view.kind === "profile"} onclick={() => (view = { kind: "profile" })}>
           <span class="ico">☺</span> {t("nav.profile")}
         </button>
+        <button class="item" class:active={view.kind === "memory"} onclick={() => (view = { kind: "memory" })}>
+          <span class="ico">✦</span> {t("memory.title")}
+        </button>
       </nav>
 
       <div class="section-head">
@@ -188,6 +193,8 @@
     <main>
       {#if view.kind === "profile"}
         <ProfileEditor />
+      {:else if view.kind === "memory"}
+        <MemoryView />
       {:else if view.kind === "settings"}
         <div class="scroll"><SettingsView /></div>
       {:else if currentResume}
