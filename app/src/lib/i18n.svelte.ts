@@ -43,12 +43,31 @@ const en = {
   "common.creating": "Creating…",
   "common.saved": "Saved",
   "common.resize": "Drag to resize",
+  "common.rename": "Rename",
+  "common.edit": "Edit",
+  "resume.savePdf": "Save PDF",
+  "resume.savePdfHint": "Saves to pdfs/<template>/ in the workspace",
+  "resume.exportPdfHint": "Choose where to save the PDF",
+  "resume.renameDirty": "Save or discard your changes before renaming.",
+  "template.confirmDelete": (p) =>
+    p.n
+      ? `Delete template "${p.name}" and its ${p.n} ${plural(p.n, "resume", "resumes")} (${p.list})? This cannot be undone.`
+      : `Delete template "${p.name}"? This removes templates/${p.id}/.`,
+  "template.confirmDiscard": "Discard unsaved changes in this template?",
+  "editTemplate.title": "Edit template",
+  "editTemplate.subtitle": "Rename it or change its folder. Linked resumes follow along.",
+  "editTemplate.description": "Description",
+  "editTemplate.relink": (p) => `${p.n} ${plural(p.n, "resume", "resumes")} will be relinked to the new folder.`,
+  "renameResume.title": "Rename resume",
+  "renameResume.subtitle": "Changes the file name. The content stays the same.",
+  "renameResume.file": "File",
+  "renameResume.taken": "A resume with this id already exists.",
 
   // Resume editor
-  "resume.exportPdf": "Export PDF",
+  "resume.exportPdf": "Export…",
   "resume.confirmDelete": (p) => `Delete resume "${p.id}"? This removes resumes/${p.id}.yaml.`,
   "resume.exportFailed": "Export failed — see errors",
-  "resume.exported": (p) => `Exported to ${p.path}`,
+  "resume.exported": (p) => `Saved to ${p.path}`,
 
   // Template editor
   "template.usedBy": (p) => `used by ${p.n} ${plural(p.n, "resume", "resumes")}`,
@@ -246,11 +265,30 @@ const pt: Record<Key, Entry> = {
   "common.creating": "Criando…",
   "common.saved": "Salvo",
   "common.resize": "Arraste para redimensionar",
+  "common.rename": "Renomear",
+  "common.edit": "Editar",
+  "resume.savePdf": "Salvar PDF",
+  "resume.savePdfHint": "Salva em pdfs/<template>/ no workspace",
+  "resume.exportPdfHint": "Escolha onde salvar o PDF",
+  "resume.renameDirty": "Salve ou descarte suas alterações antes de renomear.",
+  "template.confirmDelete": (p) =>
+    p.n
+      ? `Excluir o template "${p.name}" e ${plural(p.n, "o currículo", `os ${p.n} currículos`)} (${p.list})? Não dá para desfazer.`
+      : `Excluir o template "${p.name}"? Isso apaga templates/${p.id}/.`,
+  "template.confirmDiscard": "Descartar as alterações não salvas deste template?",
+  "editTemplate.title": "Editar template",
+  "editTemplate.subtitle": "Renomeie ou mude a pasta. Os currículos ligados acompanham.",
+  "editTemplate.description": "Descrição",
+  "editTemplate.relink": (p) => `${p.n} ${plural(p.n, "currículo será religado", "currículos serão religados")} à nova pasta.`,
+  "renameResume.title": "Renomear currículo",
+  "renameResume.subtitle": "Muda o nome do arquivo. O conteúdo continua o mesmo.",
+  "renameResume.file": "Arquivo",
+  "renameResume.taken": "Já existe um currículo com esse id.",
 
-  "resume.exportPdf": "Exportar PDF",
+  "resume.exportPdf": "Exportar…",
   "resume.confirmDelete": (p) => `Excluir o currículo "${p.id}"? Isso apaga resumes/${p.id}.yaml.`,
   "resume.exportFailed": "Falha ao exportar — veja os erros",
-  "resume.exported": (p) => `Exportado para ${p.path}`,
+  "resume.exported": (p) => `Salvo em ${p.path}`,
 
   "template.usedBy": (p) => `usado por ${p.n} ${plural(p.n, "currículo", "currículos")}`,
   "template.previewHint": "O preview usa o sample.yaml",

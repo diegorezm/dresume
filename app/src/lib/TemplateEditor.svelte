@@ -11,9 +11,11 @@
 
   interface Props {
     template: TemplateInfo;
+    onedit: () => void;
+    ondelete: () => void;
   }
 
-  let { template }: Props = $props();
+  let { template, onedit, ondelete }: Props = $props();
 
   let files = $state<string[]>([]);
   let contents = $state<Record<string, string>>({});
@@ -83,6 +85,19 @@
     setTimeout(() => (message = ""), 3000);
   }
 
+  function editInfo() {
+    if (dirtyFiles.length && !confirm(t("template.confirmDiscard"))) return;
+    onedit();
+  }
+
+  async function remove() {
+    const n = template.resumes.length;
+    if (!confirm(t("template.confirmDelete", { name: template.name, id: template.id, n, list: template.resumes.join(", ") })))
+      return;
+    await api.deleteTemplate(template.id);
+    ondelete();
+  }
+
   function jump(d: Diagnostic) {
     const prefix = `templates/${template.id}/`;
     if (!d.file?.startsWith(prefix)) return;
@@ -127,6 +142,8 @@
     <div class="actions">
       <ViewSwitch id="template" {narrow} />
       {#if message}<span class="flash">{message}</span>{/if}
+      <button class="ghost" onclick={editInfo}>{t("common.edit")}</button>
+      <button class="ghost danger" onclick={remove}>{t("common.delete")}</button>
       <button class:active={layout.agent} onclick={() => layout.toggleAgent()} title={t("agent.toggle")}>✦ {t("agent.title")}</button>
       <button class="primary" onclick={persist} disabled={dirtyFiles.length === 0}>{t("common.save")}</button>
     </div>

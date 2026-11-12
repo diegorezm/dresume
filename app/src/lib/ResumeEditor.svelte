@@ -1,6 +1,7 @@
 <script lang="ts">
   import { t } from "./i18n.svelte";
   import { save } from "@tauri-apps/plugin-dialog";
+  import { revealItemInDir } from "@tauri-apps/plugin-opener";
   import { api, debounce, type Diagnostic, type Json, type Schema, type SchemaError } from "./api";
   import ResumeForm from "./form/ResumeForm.svelte";
   import Preview from "./Preview.svelte";
@@ -16,9 +17,10 @@
     template: string;
     templateId: string;
     ondelete: () => void;
+    onrename: () => void;
   }
 
-  let { id, template, templateId, ondelete }: Props = $props();
+  let { id, template, templateId, ondelete, onrename }: Props = $props();
 
   let schema = $state<Schema | null>(null);
   let value = $state<Record<string, Json>>({});
@@ -28,6 +30,8 @@
   let diagnostics = $state<Diagnostic[]>([]);
   let busy = $state(false);
   let message = $state("");
+  /** Last PDF written, revealed when the flash message is clicked. */
+  let lastPdf = $state<string | null>(null);
   let loadError = $state("");
   /** The file changed on disk while there were unsaved edits. */
   let stale = $state(false);
@@ -94,11 +98,26 @@
     }
   }
 
+  async function savePdf() {
+    const [diags, path] = await api.savePdf(id, plain());
+    pdfDone(diags, path);
+  }
+
   async function exportPdf() {
     const path = await save({ defaultPath: `${id}.pdf`, filters: [{ name: "PDF", extensions: ["pdf"] }] });
     if (!path) return;
-    const diags = await api.exportPdf(id, plain(), path);
-    flash(diags.some((d) => d.severity === "error") ? t("resume.exportFailed") : t("resume.exported", { path }));
+    pdfDone(await api.exportPdf(id, plain(), path), path);
+  }
+
+  function pdfDone(diags: Diagnostic[], path: string | null) {
+    const failed = !path || diags.some((d) => d.severity === "error");
+    lastPdf = failed ? null : path;
+    flash(failed ? t("resume.exportFailed") : t("resume.exported", { path: path! }));
+  }
+
+  function rename() {
+    if (dirty) flash(t("resume.renameDirty"));
+    else onrename();
   }
 
   async function remove() {
@@ -143,10 +162,16 @@
     </div>
     <div class="actions">
       <ViewSwitch id="resume" {narrow} />
-      {#if message}<span class="flash">{message}</span>{/if}
+      {#if message}
+        {#if lastPdf}
+          <button class="ghost flash" onclick={() => revealItemInDir(lastPdf!)}>{message}</button>
+        {:else}<span class="flash">{message}</span>{/if}
+      {/if}
+      <button class="ghost" onclick={rename}>{t("common.rename")}</button>
       <button class="ghost danger" onclick={remove}>{t("common.delete")}</button>
       <button class:active={layout.agent} onclick={() => layout.toggleAgent()} title={t("agent.toggle")}>✦ {t("agent.title")}</button>
-      <button onclick={exportPdf}>{t("resume.exportPdf")}</button>
+      <button onclick={savePdf} title={t("resume.savePdfHint")}>{t("resume.savePdf")}</button>
+      <button onclick={exportPdf} title={t("resume.exportPdfHint")}>{t("resume.exportPdf")}</button>
       <button class="primary" onclick={persist} disabled={!dirty}>{t("common.save")}</button>
     </div>
   </header>

@@ -108,6 +108,13 @@ export const api = {
   previewResume: (id: string, value: Json) => invoke<Preview>("preview_resume", { id, value }),
   exportPdf: (id: string, value: Json, path: string) =>
     invoke<Diagnostic[]>("export_pdf", { id, value, path }),
+  /** Saves to `pdfs/<template>/<id>.pdf`; returns the diagnostics and the absolute path (null on failure). */
+  savePdf: (id: string, value: Json) => invoke<[Diagnostic[], string | null]>("save_pdf", { id, value }),
+  renameResume: (id: string, newId: string) => invoke<ResumeInfo>("rename_resume", { id, newId }),
+  updateTemplate: (id: string, newId: string, name: string, description: string) =>
+    invoke<TemplateInfo>("update_template", { id, newId, name, description }),
+  /** Deletes a template and its resumes; returns the deleted resume ids. */
+  deleteTemplate: (id: string) => invoke<string[]>("delete_template", { id }),
   newTemplate: (id: string, name: string, from: string | null) =>
     invoke<TemplateInfo>("new_template", { id, name, from }),
   templateFiles: (template: string) => invoke<string[]>("template_files", { template }),

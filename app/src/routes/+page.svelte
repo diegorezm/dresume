@@ -10,6 +10,8 @@
   import SettingsView from "$lib/SettingsView.svelte";
   import NewTemplateDialog from "$lib/NewTemplateDialog.svelte";
   import NewResumeDialog from "$lib/NewResumeDialog.svelte";
+  import EditTemplateDialog from "$lib/EditTemplateDialog.svelte";
+  import RenameResumeDialog from "$lib/RenameResumeDialog.svelte";
 
   type View =
     | { kind: "home" }
@@ -24,6 +26,9 @@
   let creatingTemplate = $state(false);
   /** Template preselected in the new-resume dialog; `null` when closed. */
   let creatingResume = $state<string | null>(null);
+  /** Template / resume being edited or renamed in a dialog. */
+  let editingTemplate = $state<string | null>(null);
+  let renamingResume = $state<string | null>(null);
 
   const currentResume = $derived(
     view.kind === "resume" ? ws?.resumes.find((r) => r.id === (view as { id: string }).id) : undefined,
@@ -192,11 +197,16 @@
             template={ws.templates.find((x) => x.id === currentResume.template)?.name ?? currentResume.template}
             templateId={currentResume.template}
             ondelete={async () => { view = { kind: "home" }; await refresh(); }}
+            onrename={() => (renamingResume = currentResume.id)}
           />
         {/key}
       {:else if currentTemplate}
         {#key currentTemplate.id}
-          <TemplateEditor template={currentTemplate} />
+          <TemplateEditor
+            template={currentTemplate}
+            onedit={() => (editingTemplate = currentTemplate.id)}
+            ondelete={async () => { view = { kind: "home" }; await refresh(); }}
+          />
         {/key}
       {:else}
         <div class="scroll">
@@ -255,6 +265,35 @@
       onclose={() => (creatingResume = null)}
       oncreated={async (r) => {
         creatingResume = null;
+        await refresh();
+        view = { kind: "resume", id: r.id };
+      }}
+    />
+  {/if}
+
+  {#if editingTemplate !== null}
+    {@const tpl = ws.templates.find((x) => x.id === editingTemplate)}
+    {#if tpl}
+      <EditTemplateDialog
+        template={tpl}
+        templates={ws.templates}
+        onclose={() => (editingTemplate = null)}
+        onsaved={async (saved) => {
+          editingTemplate = null;
+          await refresh();
+          view = { kind: "template", id: saved.id };
+        }}
+      />
+    {/if}
+  {/if}
+
+  {#if renamingResume !== null}
+    <RenameResumeDialog
+      resume={renamingResume}
+      resumes={ws.resumes}
+      onclose={() => (renamingResume = null)}
+      onsaved={async (r) => {
+        renamingResume = null;
         await refresh();
         view = { kind: "resume", id: r.id };
       }}

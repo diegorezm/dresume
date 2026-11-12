@@ -158,6 +158,41 @@ fn export_pdf(state: State<AppState>, id: String, value: Value, path: PathBuf) -
     })
 }
 
+/// Saves the PDF to the default `pdfs/<template>/<id>.pdf`; returns its absolute path.
+#[tauri::command]
+fn save_pdf(state: State<AppState>, id: String, value: Value) -> CmdResult<(Vec<Diagnostic>, Option<PathBuf>)> {
+    with_ws(&state, |ws| {
+        let overlay = Overlay::from([(format!("resumes/{id}.yaml"), serde_yaml::to_string(&value)?)]);
+        let out = compile(ws, &id, &overlay, Formats::PDF)?;
+        let Some(pdf) = &out.pdf else { return Ok((out.diagnostics, None)) };
+        let path = ws.root().join(ws.pdf_path(&id)?);
+        fs::create_dir_all(path.parent().unwrap())?;
+        fs::write(&path, pdf)?;
+        Ok((out.diagnostics, Some(path)))
+    })
+}
+
+#[tauri::command]
+fn rename_resume(state: State<AppState>, id: String, new_id: String) -> CmdResult<ResumeInfo> {
+    with_ws(&state, |ws| ws.rename_resume(&id, &new_id))
+}
+
+#[tauri::command]
+fn update_template(
+    state: State<AppState>,
+    id: String,
+    new_id: String,
+    name: String,
+    description: String,
+) -> CmdResult<TemplateInfo> {
+    with_ws(&state, |ws| ws.update_template(&id, &new_id, &name, &description))
+}
+
+#[tauri::command]
+fn delete_template(state: State<AppState>, id: String) -> CmdResult<Vec<String>> {
+    with_ws(&state, |ws| ws.delete_template(&id))
+}
+
 #[tauri::command]
 fn new_template(state: State<AppState>, id: String, name: String, from: Option<String>) -> CmdResult<TemplateInfo> {
     with_ws(&state, |ws| ws.new_template(&id, &name, from.as_deref()))
@@ -303,6 +338,10 @@ pub fn run() {
             delete_resume,
             preview_resume,
             export_pdf,
+            save_pdf,
+            rename_resume,
+            update_template,
+            delete_template,
             new_template,
             template_files,
             read_template_file,
