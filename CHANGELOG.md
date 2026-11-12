@@ -3,6 +3,29 @@
 All notable changes to dresume. The format follows [Keep a Changelog](https://keepachangelog.com/)
 and the project uses [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] - 2026-11-12
+
+### Added
+- Agent memory: `memory.md` in the workspace keeps durable facts about the user (About the user,
+  Preferences, Done) between chats. Agents get them in their instructions and save new ones with the
+  MCP tool `remember`. Saving dedupes facts (exact and near duplicates, newer wins) and keeps the file
+  under 4 KB by dropping the oldest "Done" items; lines marked 📌 are never dropped.
+- Memory view in the app: editor, size meter, "Clean up" (no AI) and "Compact with the agent",
+  facts that may say the same thing. Memory can be turned off in Settings.
+- Delete a template together with every resume linked to it.
+- Edit a template's name, description and folder; renaming the folder relinks its resumes.
+- Rename resumes.
+- "Save PDF" writes to `pdfs/<template>/<resume>.pdf` in the workspace; "Export PDF to…" asks where.
+  Clicking the confirmation shows the file in the file manager.
+- CLI: `rename`, `delete`, `edit-template`, `delete-template`, `remember`, `memory [--compact]`.
+
+### Changed
+- Secondary editor actions (export, rename, edit, delete) moved to a `⋯` menu.
+- Save is an icon button; its tooltip shows the shortcut (Ctrl+S / ⌘S).
+
+### Fixed
+- Links (in the preview and anywhere in the app) open in the system browser instead of the app window.
+
 ## [0.1.1] - 2026-11-09
 
 ### Added
