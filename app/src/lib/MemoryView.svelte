@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SaveButton from "./SaveButton.svelte";
   import { t } from "./i18n.svelte";
   import { api, type MemoryStatus } from "./api";
   import { appearance } from "./theme.svelte";
@@ -109,7 +110,7 @@
     </div>
     <div class="actions">
       {#if message}<span class="flash">{message}</span>{/if}
-      <button class="primary" onclick={persist} disabled={!dirty}>{t("common.save")}</button>
+      <SaveButton onclick={persist} disabled={!dirty} />
     </div>
   </header>
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SaveButton from "./SaveButton.svelte";
   import { t } from "./i18n.svelte";
   import { save } from "@tauri-apps/plugin-dialog";
   import { revealItemInDir } from "@tauri-apps/plugin-opener";
@@ -170,7 +171,7 @@
       {/if}
       <button class:active={layout.agent} onclick={() => layout.toggleAgent()} title={t("agent.toggle")}>✦ {t("agent.title")}</button>
       <button onclick={savePdf} title={t("resume.savePdfHint")}>{t("resume.savePdf")}</button>
-      <button class="primary" onclick={persist} disabled={!dirty}>{t("common.save")}</button>
+      <SaveButton onclick={persist} disabled={!dirty} />
       <MoreMenu
         items={[
           { label: t("resume.exportPdf"), onclick: exportPdf },

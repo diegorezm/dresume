@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SaveButton from "./SaveButton.svelte";
   import { t } from "./i18n.svelte";
   import { api, type ProfileVisibility } from "./api";
   import CodeEditor from "./CodeEditor.svelte";
@@ -64,7 +65,7 @@
     </div>
     <div class="actions">
       {#if message}<span class="flash">{message}</span>{/if}
-      <button class="primary" onclick={persist} disabled={text === saved}>{t("common.save")}</button>
+      <SaveButton onclick={persist} disabled={text === saved} />
     </div>
   </header>
 

@@ -37,6 +37,7 @@ const en = {
 
   // Common
   "common.save": "Save",
+  "common.saveShortcut": (p) => `Save: ${p.key}`,
   "common.cancel": "Cancel",
   "common.close": "Close",
   "common.delete": "Delete",
@@ -277,6 +278,7 @@ const pt: Record<Key, Entry> = {
   "home.newTemplate": "＋ Novo template",
 
   "common.save": "Salvar",
+  "common.saveShortcut": (p) => `Salvar: ${p.key}`,
   "common.cancel": "Cancelar",
   "common.close": "Fechar",
   "common.delete": "Excluir",

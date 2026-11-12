@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SaveButton from "./SaveButton.svelte";
   import { t } from "./i18n.svelte";
   import { api, debounce, type Diagnostic, type TemplateInfo } from "./api";
   import CodeEditor from "./CodeEditor.svelte";
@@ -144,7 +145,7 @@
       <ViewSwitch id="template" {narrow} />
       {#if message}<span class="flash">{message}</span>{/if}
       <button class:active={layout.agent} onclick={() => layout.toggleAgent()} title={t("agent.toggle")}>✦ {t("agent.title")}</button>
-      <button class="primary" onclick={persist} disabled={dirtyFiles.length === 0}>{t("common.save")}</button>
+      <SaveButton onclick={persist} disabled={dirtyFiles.length === 0} />
       <MoreMenu
         items={[
           { label: t("common.edit"), onclick: editInfo },
